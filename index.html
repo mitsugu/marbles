@@ -1,0 +1,3156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Marbles (Standalone Edition)</title>
+  <style>
+    /* =========================================================================
+       100% Standalone Pure CSS — Early 1990s Macintosh System 7 / After Dark 2.0
+       Zero external dependencies, zero CDN scripts, guaranteed GitHub Pages layout
+       ========================================================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #000000;
+      font-family: "Chicago", "Osaka", "MS PGothic", "Hiragino Kaku Gothic ProN", "Meiryo", monospace, sans-serif;
+      font-size: 12px;
+      color: #000000;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Fullscreen Pitch-Black Canvas (Strictly z-index: 1) */
+    #marbles-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      display: block;
+      background: #000000;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      touch-action: none;
+    }
+
+    /* Optional Subtle CRT Scanline & Vignette Filter Overlay */
+    #crt-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 2;
+      pointer-events: none;
+      display: none;
+      background:
+        radial-gradient(circle at center, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, 0.42) 100%),
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.02) 0px,
+          rgba(255, 255, 255, 0.02) 1px,
+          rgba(0, 0, 0, 0.24) 2px,
+          rgba(0, 0, 0, 0.24) 3px
+        );
+    }
+    #crt-overlay.is-active {
+      display: block;
+    }
+
+    /* Shared Classic System 7 / Windows 3.1 Beveled Window Surface */
+    .ad-surface {
+      background-color: #dadada;
+      border-top: 2px solid #ffffff;
+      border-left: 2px solid #ffffff;
+      border-right: 2px solid #808080;
+      border-bottom: 2px solid #808080;
+      outline: 1px solid #000000;
+      box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.85);
+      border-radius: 2px;
+      color: #000000;
+    }
+
+    /* Guaranteed Visible Control Panel on Load (Strictly z-index: 9999) */
+    #control-panel {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 9999;
+      display: block;
+      width: 326px;
+      max-width: calc(100vw - 24px);
+      max-height: calc(100vh - 28px);
+      background-color: #dadada;
+      border-top: 2px solid #ffffff;
+      border-left: 2px solid #ffffff;
+      border-right: 2px solid #808080;
+      border-bottom: 2px solid #808080;
+      outline: 1px solid #000000;
+      box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.88);
+      border-radius: 2px;
+      color: #000000;
+    }
+    #control-panel.is-hidden {
+      display: none !important;
+    }
+
+    /* Reopen Floating Button when Panel is Closed (Strictly z-index: 9998) */
+    #reopen-panel-btn {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 9998;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background-color: #dadada;
+      border-top: 2px solid #ffffff;
+      border-left: 2px solid #ffffff;
+      border-right: 2px solid #808080;
+      border-bottom: 2px solid #808080;
+      outline: 1px solid #000000;
+      box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.85);
+      border-radius: 2px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: bold;
+      color: #000000;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    #reopen-panel-btn.is-visible {
+      display: inline-flex;
+    }
+    #reopen-panel-btn:hover {
+      background-color: #e6e6e6;
+    }
+    #reopen-panel-btn:active {
+      background-color: #bcbcbc;
+      border-top: 2px solid #808080;
+      border-left: 2px solid #808080;
+      border-right: 2px solid #ffffff;
+      border-bottom: 2px solid #ffffff;
+    }
+
+    /* Macintosh System 7 Horizontal Pinstriped Title Bar */
+    .ad-titlebar {
+      position: relative;
+      height: 24px;
+      background: repeating-linear-gradient(
+        to bottom,
+        #ffffff 0px,
+        #ffffff 1px,
+        #a0a0a0 1px,
+        #a0a0a0 2px
+      );
+      border-bottom: 1px solid #555555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 6px;
+      cursor: grab;
+      touch-action: none;
+    }
+    .ad-titlebar:active {
+      cursor: grabbing;
+    }
+
+    /* Retro Square Close Box on the Left of Title Bar */
+    .ad-close-box {
+      position: absolute;
+      left: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 13px;
+      height: 13px;
+      padding: 0;
+      background-color: #dadada;
+      border: 1px solid #000000;
+      box-shadow: inset 1px 1px 0px #ffffff, inset -1px -1px 0px #777777;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ad-close-box::after {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border: 1px solid #222222;
+      background: #efefef;
+      display: block;
+    }
+    .ad-close-box:hover::after {
+      background: #ffffff;
+    }
+    .ad-close-box:active {
+      background-color: #000000;
+    }
+    .ad-close-box:active::after {
+      background: #000000;
+      border-color: #ffffff;
+    }
+
+    /* Centered Title Masking the Pinstripes */
+    .ad-title-text {
+      background-color: #dadada;
+      padding: 1px 9px;
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 0.2px;
+      color: #000000;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* Scrollable Panel Interior */
+    .ad-panel-body {
+      padding: 8px;
+      max-height: calc(100vh - 58px);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .ad-panel-body::-webkit-scrollbar {
+      width: 11px;
+    }
+    .ad-panel-body::-webkit-scrollbar-track {
+      background: #b5b5b5;
+      border-left: 1px solid #666666;
+    }
+    .ad-panel-body::-webkit-scrollbar-thumb {
+      background: #dadada;
+      border-top: 1px solid #ffffff;
+      border-left: 1px solid #ffffff;
+      border-right: 1px solid #555555;
+      border-bottom: 1px solid #555555;
+    }
+
+    /* Dark Module Banner inside Control Panel */
+    .ad-module-header {
+      background-color: #101622;
+      color: #ffffff;
+      border-top: 1px solid #444444;
+      border-left: 1px solid #444444;
+      border-right: 1px solid #ffffff;
+      border-bottom: 1px solid #ffffff;
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 1px;
+    }
+    .ad-module-icon {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      background: #000000;
+      border: 1px solid #5c6b73;
+      image-rendering: pixelated;
+    }
+    .ad-module-meta {
+      flex: 1;
+      min-width: 0;
+      line-height: 1.28;
+    }
+    .ad-module-name {
+      font-weight: bold;
+      font-size: 12px;
+      color: #7ef4e3;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 4px;
+    }
+    .ad-module-year {
+      font-size: 10px;
+      font-weight: normal;
+      color: #b8c4d0;
+    }
+    .ad-module-quote {
+      font-size: 10px;
+      color: #d6deeb;
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    /* LCD Status Strip */
+    .ad-status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 4px 7px;
+      background-color: #081216;
+      color: #72f7cb;
+      border-top: 1px solid #333333;
+      border-left: 1px solid #333333;
+      border-right: 1px solid #ffffff;
+      border-bottom: 1px solid #ffffff;
+      font-family: "Courier New", Consolas, monospace;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    .ad-status-right {
+      color: #ffe270;
+      font-size: 10px;
+    }
+
+    /* Sunken Inset Control Group */
+    .ad-group {
+      background-color: #cecece;
+      border-top: 1px solid #7a7a7a;
+      border-left: 1px solid #7a7a7a;
+      border-right: 1px solid #ffffff;
+      border-bottom: 1px solid #ffffff;
+      padding: 7px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .ad-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .ad-label {
+      font-size: 11px;
+      font-weight: bold;
+      color: #000000;
+    }
+
+    .ad-val-badge {
+      font-family: "Courier New", Consolas, monospace;
+      font-size: 11px;
+      font-weight: bold;
+      color: #001c55;
+      background: #e8e8e8;
+      border: 1px solid #888888;
+      padding: 1px 5px;
+      border-radius: 1px;
+    }
+
+    /* Classic 3D Beveled Push Button */
+    .ad-btn {
+      appearance: none;
+      -webkit-appearance: none;
+      background-color: #dadada;
+      border-top: 2px solid #ffffff;
+      border-left: 2px solid #ffffff;
+      border-right: 2px solid #6b6b6b;
+      border-bottom: 2px solid #6b6b6b;
+      outline: 1px solid #141414;
+      border-radius: 1px;
+      color: #000000;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: bold;
+      line-height: 1.25;
+      padding: 5px 7px;
+      cursor: pointer;
+      text-align: center;
+      touch-action: manipulation;
+    }
+    .ad-btn:hover {
+      background-color: #e6e6e6;
+    }
+    .ad-btn:active {
+      background-color: #b5b5b5;
+      border-top: 2px solid #6b6b6b;
+      border-left: 2px solid #6b6b6b;
+      border-right: 2px solid #ffffff;
+      border-bottom: 2px solid #ffffff;
+    }
+    .ad-btn.is-active {
+      background-color: #0e2a6e;
+      color: #ffffff;
+      border-top: 2px solid #061338;
+      border-left: 2px solid #061338;
+      border-right: 2px solid #8fb0ff;
+      border-bottom: 2px solid #8fb0ff;
+    }
+    .ad-btn.is-amber {
+      background-color: #703800;
+      color: #ffea79;
+      border-top: 2px solid #331900;
+      border-left: 2px solid #331900;
+      border-right: 2px solid #ffc978;
+      border-bottom: 2px solid #ffc978;
+    }
+
+    /* Grid Layouts for Buttons */
+    .ad-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+    }
+    .ad-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 4px;
+    }
+    .ad-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+
+    /* Retro Macintosh Range Slider */
+    .ad-slider-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .ad-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1;
+      height: 12px;
+      margin: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        #9e9e9e 0px,
+        #9e9e9e 2px,
+        #c8c8c8 2px,
+        #c8c8c8 4px
+      );
+      border-top: 1px solid #4d4d4d;
+      border-left: 1px solid #4d4d4d;
+      border-right: 1px solid #ffffff;
+      border-bottom: 1px solid #ffffff;
+      outline: none;
+      cursor: pointer;
+    }
+    .ad-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 13px;
+      height: 18px;
+      background-color: #dadada;
+      border-top: 2px solid #ffffff;
+      border-left: 2px solid #ffffff;
+      border-right: 2px solid #595959;
+      border-bottom: 2px solid #595959;
+      outline: 1px solid #000000;
+      border-radius: 1px;
+      cursor: pointer;
+    }
+    .ad-slider::-moz-range-thumb {
+      width: 13px;
+      height: 18px;
+      background-color: #dadada;
+      border-top: 2px solid #ffffff;
+      border-left: 2px solid #ffffff;
+      border-right: 2px solid #595959;
+      border-bottom: 2px solid #595959;
+      outline: 1px solid #000000;
+      border-radius: 1px;
+      cursor: pointer;
+    }
+
+    /* Audio Status Pill */
+    .ad-audio-state {
+      font-size: 10px;
+      padding: 2px 6px;
+      border: 1px solid #555555;
+      background: #ececec;
+      color: #333333;
+      border-radius: 1px;
+      white-space: nowrap;
+    }
+    .ad-audio-state.is-ready {
+      background: #0d2b1a;
+      color: #6df7a8;
+      border-color: #000000;
+    }
+
+    /* Checkbox Row */
+    .ad-check-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .ad-check-label input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      accent-color: #0e2a6e;
+      cursor: pointer;
+    }
+
+    .ad-footer-hint {
+      font-size: 10px;
+      color: #333333;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1px 2px 0;
+    }
+
+    /* Pin Edit Mode On-Screen Floating Badge */
+    #edit-mode-badge {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 9990;
+      display: none;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 7px;
+      max-width: calc(100vw - 24px);
+      padding: 7px 10px;
+      font-size: 11px;
+    }
+    #edit-mode-badge.is-active {
+      display: flex;
+    }
+    .edit-badge-title {
+      font-weight: bold;
+      color: #6b2c00;
+    }
+    .edit-badge-help {
+      font-size: 11px;
+      color: #1f1f1f;
+    }
+
+    /* Non-blocking Retro Toast Notification (Replaces alert/confirm) */
+    #retro-toast {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9997;
+      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: bold;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.22s ease;
+      max-width: calc(100vw - 32px);
+      text-align: center;
+    }
+    #retro-toast.is-visible {
+      opacity: 1;
+    }
+
+    /* Compact Mobile Viewport Adjustments */
+    @media (max-width: 520px) {
+      #control-panel {
+        top: 10px;
+        right: 10px;
+        width: 300px;
+        max-width: calc(100vw - 20px);
+        max-height: calc(100vh - 20px);
+      }
+      .ad-panel-body {
+        padding: 6px;
+        gap: 5px;
+      }
+      .edit-badge-help {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. Pitch-Black Simulation Canvas (z-index: 1) -->
+  <canvas id="marbles-canvas"></canvas>
+
+  <!-- 2. Optional CRT Scanlines Overlay (z-index: 2) -->
+  <div id="crt-overlay" aria-hidden="true"></div>
+
+  <!-- 3. Pin Edit Mode On-Screen Retro Badge (z-index: 9990) -->
+  <div id="edit-mode-badge" class="ad-surface" role="status">
+    <span class="edit-badge-title">🔧 ピン編集モード中</span>
+    <span class="edit-badge-help">空き地クリック:追加 ／ ドラッグ:移動 ／ 右クリック・Shift+クリック:削除</span>
+    <button id="edit-delete-subtoggle" type="button" class="ad-btn" title="タッチ端末向け：タップでピンを削除">削除タップ: OFF</button>
+    <button id="edit-done-btn" type="button" class="ad-btn is-active">完了 (E)</button>
+  </div>
+
+  <!-- 4. Reopen Floating Button when Control Panel is Hidden (z-index: 9998) -->
+  <button id="reopen-panel-btn" type="button" aria-label="コントロールパネルを表示">
+    ⚙ パネル表示 (H)
+  </button>
+
+  <!-- 5. Guaranteed Visible After Dark 2.0 Control Panel (z-index: 9999) -->
+  <aside id="control-panel" aria-label="Marbles Control Panel">
+    <!-- Draggable Macintosh System 7 Pinstriped Title Bar -->
+    <div id="panel-titlebar" class="ad-titlebar">
+      <button id="close-panel-btn" type="button" class="ad-close-box" title="パネルを隠す (H)" aria-label="パネルを隠す"></button>
+      <span class="ad-title-text">Marbles</span>
+    </div>
+
+    <div class="ad-panel-body">
+      <!-- Retro After Dark Module Header -->
+      <div class="ad-module-header">
+        <svg class="ad-module-icon" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="18" height="18" fill="#000000" />
+          <rect x="7" y="0" width="4" height="3" fill="#9ca3af" />
+          <rect x="6" y="3" width="6" height="1" fill="#e5e7eb" />
+          <circle cx="9" cy="11" r="4.5" fill="#1e4d56" stroke="#7ef4e3" stroke-width="1" />
+          <path d="M7 9 C8.5 10.5, 9.5 11.5, 11 13" stroke="#bdfcf2" stroke-width="1.2" fill="none" />
+          <rect x="6" y="8" width="2" height="2" fill="#ffffff" />
+          <circle cx="4.5" cy="5.5" r="2.2" fill="#e11d48" />
+          <rect x="3.5" y="4.5" width="1" height="1" fill="#ffffff" />
+          <circle cx="14" cy="14" r="2.7" fill="#facc15" />
+          <rect x="13" y="13" width="1" height="1" fill="#000000" />
+          <rect x="15" y="13" width="1" height="1" fill="#000000" />
+          <rect x="13" y="15" width="3" height="0.9" fill="#000000" />
+        </svg>
+        <div class="ad-module-meta">
+          <div class="ad-module-name">
+            <span>MARBLES</span>
+            <span class="ad-module-year">Berkeley Systems '92</span>
+          </div>
+          <div class="ad-module-quote">"Some marbles are more sensitive than others."</div>
+        </div>
+      </div>
+
+      <!-- Live Counters & Reset Timer Status -->
+      <div class="ad-status-bar">
+        <span id="stats-counter">MARBLES: 0 | PINS: 32</span>
+        <span id="reset-countdown-label" class="ad-status-right">RESET: 60s</span>
+      </div>
+
+      <!-- Sound Controls -->
+      <div class="ad-group">
+        <div class="ad-row">
+          <button id="sound-toggle-btn" type="button" class="ad-btn is-active">🔊 サウンド ON (M)</button>
+          <span id="audio-status-pill" class="ad-audio-state">画面操作で音声起動</span>
+        </div>
+        <div class="ad-slider-row">
+          <span class="ad-label">音量 (Vol)</span>
+          <input id="volume-slider" type="range" min="0" max="100" value="75" class="ad-slider" />
+          <span id="volume-value" class="ad-val-badge">75%</span>
+        </div>
+      </div>
+
+      <!-- Pin Count, Pin Size & Pin Edit Mode -->
+      <div class="ad-group">
+        <div class="ad-row">
+          <span class="ad-label">ピンの数 (Pin Count)</span>
+          <span id="pin-count-value" class="ad-val-badge">32個</span>
+        </div>
+        <div class="ad-slider-row">
+          <input id="pin-count-slider" type="range" min="15" max="80" value="32" class="ad-slider" />
+        </div>
+
+        <div class="ad-row">
+          <span class="ad-label">ピンサイズ (Pin Size)</span>
+          <span id="pin-size-value" class="ad-val-badge">Medium (22px)</span>
+        </div>
+        <div class="ad-slider-row">
+          <input id="pin-size-slider" type="range" min="13" max="32" value="22" class="ad-slider" />
+        </div>
+
+        <div class="ad-grid-2">
+          <button id="edit-pins-btn" type="button" class="ad-btn">🔧 ピン編集モード (E)</button>
+          <button id="rearrange-pins-btn" type="button" class="ad-btn">🔀 ピン再配置</button>
+        </div>
+      </div>
+
+      <!-- Drop Mode, Spawn Speed & Auto Reset Interval -->
+      <div class="ad-group">
+        <div class="ad-row">
+          <span class="ad-label">落下モード (Drop Mode)</span>
+        </div>
+        <div class="ad-grid-2">
+          <button type="button" data-dropmode="single" class="dropmode-btn ad-btn is-active">1個ずつ (Single)</button>
+          <button type="button" data-dropmode="rush" class="dropmode-btn ad-btn">連続ラッシュ (Rush)</button>
+        </div>
+
+        <div class="ad-row">
+          <span class="ad-label">投下スピード (Speed)</span>
+          <span id="spawn-speed-value" class="ad-val-badge">Lv.5</span>
+        </div>
+        <div class="ad-slider-row">
+          <input id="spawn-speed-slider" type="range" min="1" max="10" value="5" class="ad-slider" />
+        </div>
+
+        <div class="ad-row">
+          <span class="ad-label">自動リセット (Reset Interval)</span>
+        </div>
+        <div class="ad-grid-4">
+          <button type="button" data-reset="0" class="reset-btn ad-btn">OFF</button>
+          <button type="button" data-reset="30" class="reset-btn ad-btn">30秒</button>
+          <button type="button" data-reset="60" class="reset-btn ad-btn is-active">60秒</button>
+          <button type="button" data-reset="120" class="reset-btn ad-btn">120秒</button>
+        </div>
+      </div>
+
+      <!-- Manual Drop & Screen Action Buttons -->
+      <div class="ad-group">
+        <div class="ad-grid-3">
+          <button id="drop-marble-btn" type="button" class="ad-btn">🔮 ビー玉 (Space)</button>
+          <button id="drop-smiley-btn" type="button" class="ad-btn">🙂 スマイル玉 (S)</button>
+          <button id="drop-cube-btn" type="button" class="ad-btn">🟦 キューブ (C)</button>
+        </div>
+        <div class="ad-grid-2">
+          <button id="clear-marbles-btn" type="button" class="ad-btn">🧹 クリア (R)</button>
+          <button id="fullscreen-btn" type="button" class="ad-btn">🖥 全画面 (F)</button>
+        </div>
+      </div>
+
+      <!-- CRT Scanline Checkbox & Footer Hint -->
+      <div class="ad-row" style="padding: 1px 2px;">
+        <label class="ad-check-label" for="crt-checkbox">
+          <input id="crt-checkbox" type="checkbox" />
+          <span>CRTスキャンライン表示</span>
+        </label>
+        <span style="font-size: 10px; color: #3a3a3a;">Hキー: パネル開閉</span>
+      </div>
+      <div class="ad-footer-hint">
+        <span>画面クリックでその位置へシューター移動＆投下</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 6. Retro Non-Blocking Toast Message Box -->
+  <div id="retro-toast" class="ad-surface" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      /* =======================================================================
+         1. UTILITY HELPERS & 4x4 BAYER DITHERING PIXEL-ART SPRITE ENGINE
+         ======================================================================= */
+      const BAYER_4X4 = [
+        [ 0,  8,  2, 10],
+        [12,  4, 14,  6],
+        [ 3, 11,  1,  9],
+        [15,  7, 13,  5]
+      ];
+
+      function clamp(val, min, max) {
+        return val < min ? min : (val > max ? max : val);
+      }
+
+      /**
+       * Quantizes an 8-bit RGB channel using 4x4 ordered Bayer dithering
+       * to recreate authentic 1992 Macintosh 256-color indexed sprites.
+       */
+      function dither256(value, gx, gy, step) {
+        const threshold = (BAYER_4X4[gy & 3][gx & 3] / 16 - 0.5) * (step * 0.88);
+        const q = Math.round((value + threshold) / step) * step;
+        return q < 0 ? 0 : (q > 255 ? 255 : q);
+      }
+
+      /**
+       * Writes a crisp square pixel block (texelSize x texelSize) into ImageData.
+       */
+      function putTexel(data, canvasW, canvasH, gx, gy, texelSize, r, g, b, a) {
+        const sx = gx * texelSize;
+        const sy = gy * texelSize;
+        for (let py = 0; py < texelSize; py++) {
+          const y = sy + py;
+          if (y < 0 || y >= canvasH) continue;
+          for (let px = 0; px < texelSize; px++) {
+            const x = sx + px;
+            if (x < 0 || x >= canvasW) continue;
+            const idx = (y * canvasW + x) * 4;
+            data[idx] = r;
+            data[idx + 1] = g;
+            data[idx + 2] = b;
+            data[idx + 3] = a;
+          }
+        }
+      }
+
+      const MARBLE_COLOR_KEYS = ["ruby", "magenta", "emerald", "cobalt", "silver"];
+
+      class RetroSpriteBank {
+        constructor() {
+          this.texel = 2; // 2 screen CSS pixels = 1 crisp vintage CRT pixel
+          this.pinSprites = [];
+          this.pinShimmerSprite = null;
+          this.marbleFrames = {};
+          this.smileyNormalFrames = [];
+          this.smileySurprisedFrames = [];
+          this.cubeFrames = [];
+          this.dispenserSprite = null;
+        }
+
+        rebuildAll(pinRadiusPx, marbleRadiusPx) {
+          // 4 subtle internal swirl angles for cat's-eye clear glass pins
+          this.pinSprites = [0, 1, 2, 3].map((v) => this.buildGlassPin(pinRadiusPx, v));
+          this.pinShimmerSprite = this.buildPinShimmer(pinRadiusPx);
+
+          // 5 Glossy 256-Color Marble Palettes (10 rotation frames each)
+          const palettes = {
+            ruby:    { rim: [52, 6, 12],   dark: [148, 12, 26],  mid: [232, 28, 44],  bright: [255, 118, 110] },
+            magenta: { rim: [56, 8, 50],   dark: [148, 16, 122], mid: [234, 44, 190], bright: [255, 146, 232] },
+            emerald: { rim: [6, 48, 22],   dark: [12, 122, 50],  mid: [26, 206, 86],  bright: [126, 250, 158] },
+            cobalt:  { rim: [8, 20, 70],   dark: [18, 58, 174],  mid: [46, 118, 250], bright: [134, 194, 255] },
+            silver:  { rim: [38, 42, 50],  dark: [98, 106, 120], mid: [180, 190, 206], bright: [242, 247, 255] }
+          };
+
+          this.marbleFrames = {};
+          for (let k = 0; k < MARBLE_COLOR_KEYS.length; k++) {
+            const key = MARBLE_COLOR_KEYS[k];
+            this.marbleFrames[key] = [];
+            for (let f = 0; f < 10; f++) {
+              const phase = (f / 10) * Math.PI * 2;
+              this.marbleFrames[key].push(this.buildGlossyMarble(marbleRadiusPx, palettes[key], phase));
+            }
+          }
+
+          // Sensitive Smiley Marble (16 spin frames x 2 facial expressions)
+          this.smileyNormalFrames = [];
+          this.smileySurprisedFrames = [];
+          for (let f = 0; f < 16; f++) {
+            const angle = (f / 16) * Math.PI * 2;
+            this.smileyNormalFrames.push(this.buildSmileyMarble(marbleRadiusPx, angle, false));
+            this.smileySurprisedFrames.push(this.buildSmileyMarble(marbleRadiusPx, angle, true));
+          }
+
+          // Colorful Bouncing Cube (24 smooth rotation frames)
+          this.cubeFrames = [];
+          for (let f = 0; f < 24; f++) {
+            const angle = (f / 24) * Math.PI * 2;
+            this.cubeFrames.push(this.buildColorfulCube(marbleRadiusPx, angle));
+          }
+
+          // Top Metallic Dispenser Chute / Tube
+          this.dispenserSprite = this.buildDispenserChute(marbleRadiusPx);
+        }
+
+        /**
+         * Cat's-Eye Clear Glass Pin:
+         * Dark outer rim, cyan/seafoam-green internal swirl, crisp upper-left white
+         * specular highlight, and lower-right internal reflection crescent.
+         */
+        buildGlassPin(radiusPx, variant) {
+          const ts = this.texel;
+          const gridR = Math.max(6, Math.round(radiusPx / ts));
+          const dim = gridR * 2 + 2;
+          const size = dim * ts;
+
+          const off = document.createElement("canvas");
+          off.width = size;
+          off.height = size;
+          const octx = off.getContext("2d");
+          const img = octx.createImageData(size, size);
+          const data = img.data;
+
+          const c = (dim - 1) / 2;
+          const rot = variant * 0.72 - 0.52;
+          const cosA = Math.cos(rot);
+          const sinA = Math.sin(rot);
+
+          for (let gy = 0; gy < dim; gy++) {
+            for (let gx = 0; gx < dim; gx++) {
+              const nx = (gx - c) / gridR;
+              const ny = (gy - c) / gridR;
+              const dSq = nx * nx + ny * ny;
+              if (dSq > 1.0) continue;
+
+              const d = Math.sqrt(dSq);
+              const nz = Math.sqrt(Math.max(0, 1.0 - dSq));
+
+              // Dark outer glass rim
+              if (d > 0.88) {
+                const lowerRightRim = (nx * 0.6 + ny * 0.6 > 0.35) ? 1.45 : 1.0;
+                putTexel(
+                  data, size, size, gx, gy, ts,
+                  Math.round(20 * lowerRightRim),
+                  Math.round(48 * lowerRightRim),
+                  Math.round(56 * lowerRightRim),
+                  255
+                );
+                continue;
+              }
+
+              // Deep translucent smoky-glass base
+              const keyLight = Math.max(0, nx * -0.48 + ny * -0.52 + nz * 0.70);
+              let r = 8 + keyLight * 34;
+              let g = 22 + keyLight * 62;
+              let b = 28 + keyLight * 72;
+
+              // Cyan / seafoam-green internal cat's-eye swirl ribbons
+              const rx = nx * cosA - ny * sinA;
+              const ry = nx * sinA + ny * cosA;
+              const ribbonPrimary = Math.max(0, 1.0 - Math.abs(rx + Math.sin(ry * 2.7) * 0.35) * 3.0) * nz;
+              const ribbonSecondary = Math.max(0, 1.0 - Math.abs(ry * 0.82 - Math.sin(rx * 2.9) * 0.28) * 3.6) * nz * 0.72;
+
+              if (ribbonPrimary > 0.04) {
+                r += ribbonPrimary * 88;
+                g += ribbonPrimary * 196;
+                b += ribbonPrimary * 178;
+              }
+              if (ribbonSecondary > 0.04) {
+                r += ribbonSecondary * 95;
+                g += ribbonSecondary * 158;
+                b += ribbonSecondary * 204;
+              }
+
+              // Lower-right internal reflection crescent
+              const lrDot = nx * 0.65 + ny * 0.65;
+              if (d > 0.52 && d < 0.84 && lrDot > 0.30) {
+                const refl = ((lrDot - 0.30) / 0.70) * (1.0 - Math.abs(d - 0.68) / 0.17);
+                if (refl > 0) {
+                  r += refl * 86;
+                  g += refl * 148;
+                  b += refl * 158;
+                }
+              }
+
+              // Crisp upper-left white specular highlight
+              const specDist = Math.hypot(nx + 0.38, ny + 0.40);
+              if (specDist < 0.19) {
+                putTexel(data, size, size, gx, gy, ts, 255, 255, 255, 255);
+                continue;
+              } else if (specDist < 0.30) {
+                r += 118;
+                g += 172;
+                b += 184;
+              }
+
+              putTexel(
+                data, size, size, gx, gy, ts,
+                dither256(r, gx, gy, 26),
+                dither256(g, gx, gy, 26),
+                dither256(b, gx, gy, 26),
+                255
+              );
+            }
+          }
+
+          octx.putImageData(img, 0, 0);
+          return off;
+        }
+
+        /**
+         * Subtle pixel-art shimmer overlay drawn briefly when a glass pin is struck.
+         */
+        buildPinShimmer(radiusPx) {
+          const ts = this.texel;
+          const gridR = Math.max(6, Math.round(radiusPx / ts));
+          const dim = gridR * 2 + 2;
+          const size = dim * ts;
+
+          const off = document.createElement("canvas");
+          off.width = size;
+          off.height = size;
+          const octx = off.getContext("2d");
+          const img = octx.createImageData(size, size);
+          const data = img.data;
+          const c = (dim - 1) / 2;
+
+          for (let gy = 0; gy < dim; gy++) {
+            for (let gx = 0; gx < dim; gx++) {
+              const nx = (gx - c) / gridR;
+              const ny = (gy - c) / gridR;
+              const d = Math.hypot(nx, ny);
+              if (d > 0.98) continue;
+
+              // Outer cyan-white shimmer ring + star glint on specular spot
+              const onRing = d > 0.78 && d <= 0.94;
+              const onCross = (Math.abs(gx - (c - gridR * 0.38)) <= 0.6 && Math.abs(gy - (c - gridR * 0.40)) <= 2.4) ||
+                              (Math.abs(gy - (c - gridR * 0.40)) <= 0.6 && Math.abs(gx - (c - gridR * 0.38)) <= 2.4);
+
+              if (onCross) {
+                putTexel(data, size, size, gx, gy, ts, 255, 255, 255, 235);
+              } else if (onRing && ((gx + gy) & 1) === 0) {
+                putTexel(data, size, size, gx, gy, ts, 165, 255, 245, 190);
+              }
+            }
+          }
+
+          octx.putImageData(img, 0, 0);
+          return off;
+        }
+
+        /**
+         * Glossy 256-color pixel-art marble frame.
+         */
+        buildGlossyMarble(radiusPx, pal, phase) {
+          const ts = this.texel;
+          const gridR = Math.max(4, Math.round(radiusPx / ts));
+          const dim = gridR * 2 + 2;
+          const size = dim * ts;
+
+          const off = document.createElement("canvas");
+          off.width = size;
+          off.height = size;
+          const octx = off.getContext("2d");
+          const img = octx.createImageData(size, size);
+          const data = img.data;
+
+          const c = (dim - 1) / 2;
+          const cosP = Math.cos(phase);
+          const sinP = Math.sin(phase);
+
+          for (let gy = 0; gy < dim; gy++) {
+            for (let gx = 0; gx < dim; gx++) {
+              const nx = (gx - c) / gridR;
+              const ny = (gy - c) / gridR;
+              const dSq = nx * nx + ny * ny;
+              if (dSq > 1.0) continue;
+
+              const d = Math.sqrt(dSq);
+              const nz = Math.sqrt(Math.max(0, 1.0 - dSq));
+
+              if (d > 0.84) {
+                putTexel(data, size, size, gx, gy, ts, pal.rim[0], pal.rim[1], pal.rim[2], 255);
+                continue;
+              }
+
+              let shade = Math.max(0, nx * -0.52 + ny * -0.54 + nz * 0.66);
+              const rx = nx * cosP - ny * sinP;
+              const internalBand = Math.sin(rx * 3.8 + nz * 1.5) * 0.14 * nz;
+              shade = clamp(shade + internalBand, 0, 1);
+
+              let r, g, b;
+              if (shade < 0.46) {
+                const t = shade / 0.46;
+                r = pal.dark[0] + (pal.mid[0] - pal.dark[0]) * t;
+                g = pal.dark[1] + (pal.mid[1] - pal.dark[1]) * t;
+                b = pal.dark[2] + (pal.mid[2] - pal.dark[2]) * t;
+              } else {
+                const t = (shade - 0.46) / 0.54;
+                r = pal.mid[0] + (pal.bright[0] - pal.mid[0]) * t;
+                g = pal.mid[1] + (pal.bright[1] - pal.mid[1]) * t;
+                b = pal.mid[2] + (pal.bright[2] - pal.mid[2]) * t;
+              }
+
+              // Lower-right bounce sheen
+              if (nx * 0.6 + ny * 0.6 > 0.42 && d > 0.52) {
+                r = r * 0.78 + pal.bright[0] * 0.26;
+                g = g * 0.78 + pal.bright[1] * 0.26;
+                b = b * 0.78 + pal.bright[2] * 0.26;
+              }
+
+              // Crisp white specular pixel highlight
+              if (Math.hypot(nx + 0.36, ny + 0.38) < 0.23) {
+                putTexel(data, size, size, gx, gy, ts, 255, 255, 255, 255);
+                continue;
+              }
+
+              putTexel(
+                data, size, size, gx, gy, ts,
+                dither256(r, gx, gy, 28),
+                dither256(g, gx, gy, 28),
+                dither256(b, gx, gy, 28),
+                255
+              );
+            }
+          }
+
+          octx.putImageData(img, 0, 0);
+          return off;
+        }
+
+        /**
+         * Sensitive Smiley Marble: ":)" normally, ":O" surprised face on collision!
+         */
+        buildSmileyMarble(radiusPx, angle, surprised) {
+          const ts = this.texel;
+          const gridR = Math.max(5, Math.round((radiusPx * 1.06) / ts));
+          const dim = gridR * 2 + 2;
+          const size = dim * ts;
+
+          const off = document.createElement("canvas");
+          off.width = size;
+          off.height = size;
+          const octx = off.getContext("2d");
+          const img = octx.createImageData(size, size);
+          const data = img.data;
+
+          const c = (dim - 1) / 2;
+          const cosA = Math.cos(-angle);
+          const sinA = Math.sin(-angle);
+
+          for (let gy = 0; gy < dim; gy++) {
+            for (let gx = 0; gx < dim; gx++) {
+              const nx = (gx - c) / gridR;
+              const ny = (gy - c) / gridR;
+              const dSq = nx * nx + ny * ny;
+              if (dSq > 1.0) continue;
+
+              const d = Math.sqrt(dSq);
+              const nz = Math.sqrt(Math.max(0, 1.0 - dSq));
+
+              if (d > 0.84) {
+                putTexel(data, size, size, gx, gy, ts, 78, 50, 0, 255);
+                continue;
+              }
+
+              const fx = nx * cosA - ny * sinA;
+              const fy = nx * sinA + ny * cosA;
+
+              const eyeRadius = surprised ? 0.175 : 0.15;
+              const leftEye = Math.hypot((fx + 0.27) * 1.12, (fy + 0.22) * 0.92) < eyeRadius;
+              const rightEye = Math.hypot((fx - 0.27) * 1.12, (fy + 0.22) * 0.92) < eyeRadius;
+
+              let mouthRim = false;
+              let mouthInterior = false;
+              if (surprised) {
+                const mDist = Math.hypot(fx * 1.04, (fy - 0.26) * 0.94);
+                if (mDist < 0.26) {
+                  mouthRim = true;
+                  if (mDist < 0.12) mouthInterior = true;
+                }
+              } else {
+                const arcDist = Math.hypot(fx, fy + 0.03);
+                if (fy > 0.08 && Math.abs(fx) < 0.49 && arcDist > 0.34 && arcDist < 0.54) {
+                  mouthRim = true;
+                }
+              }
+
+              if (leftEye || rightEye || mouthRim) {
+                if (mouthInterior) {
+                  putTexel(data, size, size, gx, gy, ts, 165, 22, 22, 255);
+                } else {
+                  putTexel(data, size, size, gx, gy, ts, 20, 16, 8, 255);
+                }
+                continue;
+              }
+
+              if (Math.hypot(nx + 0.38, ny + 0.40) < 0.19) {
+                putTexel(data, size, size, gx, gy, ts, 255, 255, 242, 255);
+                continue;
+              }
+
+              const shade = Math.max(0, nx * -0.45 + ny * -0.50 + nz * 0.72);
+              const r = 198 + shade * 57;
+              const g = 152 + shade * 96;
+              const b = 10 + shade * 46;
+
+              putTexel(
+                data, size, size, gx, gy, ts,
+                dither256(r, gx, gy, 24),
+                dither256(g, gx, gy, 24),
+                dither256(b, gx, gy, 24),
+                255
+              );
+            }
+          }
+
+          octx.putImageData(img, 0, 0);
+          return off;
+        }
+
+        /**
+         * Colorful Bouncing Cube: Rotating 256-color pixel-art multi-colored cube.
+         */
+        buildColorfulCube(radiusPx, angle) {
+          const ts = this.texel;
+          const gridR = Math.max(5, Math.round((radiusPx * 1.12) / ts));
+          const dim = gridR * 2 + 4;
+          const size = dim * ts;
+
+          const off = document.createElement("canvas");
+          off.width = size;
+          off.height = size;
+          const octx = off.getContext("2d");
+          const img = octx.createImageData(size, size);
+          const data = img.data;
+
+          const c = (dim - 1) / 2;
+          const cosA = Math.cos(-angle);
+          const sinA = Math.sin(-angle);
+          const halfSide = gridR * 0.80;
+
+          // Vivid multi-colored retro cube face quadrants
+          const tiles = [
+            [236, 36, 52],   // Vivid Ruby
+            [40, 198, 242],  // Cyan-Blue
+            [44, 214, 98],   // Emerald Green
+            [252, 212, 38]   // Sunny Yellow
+          ];
+
+          for (let gy = 0; gy < dim; gy++) {
+            for (let gx = 0; gx < dim; gx++) {
+              const dx = gx - c;
+              const dy = gy - c;
+              const lx = dx * cosA - dy * sinA;
+              const ly = dx * sinA + dy * cosA;
+
+              if (Math.abs(lx) > halfSide || Math.abs(ly) > halfSide) continue;
+
+              const borderDist = Math.min(halfSide - Math.abs(lx), halfSide - Math.abs(ly));
+              const seamDist = Math.min(Math.abs(lx), Math.abs(ly));
+
+              // Crisp dark pixel outline & cross seam
+              if (borderDist < 0.92 || seamDist < 0.58) {
+                putTexel(data, size, size, gx, gy, ts, 22, 18, 28, 255);
+                continue;
+              }
+
+              const qIdx = (ly >= 0 ? 2 : 0) + (lx >= 0 ? 1 : 0);
+              const col = tiles[qIdx];
+
+              // Directional top-left 3D bevel shading in screen space
+              const bevel = 1.0 + ((dx * -0.52 + dy * -0.52) / gridR) * 0.28;
+              putTexel(
+                data, size, size, gx, gy, ts,
+                dither256(col[0] * bevel, gx, gy, 24),
+                dither256(col[1] * bevel, gx, gy, 24),
+                dither256(col[2] * bevel, gx, gy, 24),
+                255
+              );
+            }
+          }
+
+          octx.putImageData(img, 0, 0);
+          return off;
+        }
+
+        /**
+         * Metallic Dispenser Tube / Chute Sprite mounted at the top edge of the screen.
+         */
+        buildDispenserChute(marbleRadiusPx) {
+          const ts = this.texel;
+          const halfBarrelW = Math.max(6, Math.round((marbleRadiusPx * 1.35) / ts));
+          const flangeW = halfBarrelW + 3;
+          const gridW = flangeW * 2 + 2;
+          const gridH = Math.max(15, Math.round((marbleRadiusPx * 2.9) / ts));
+
+          const canvasW = gridW * ts;
+          const canvasH = gridH * ts;
+          const off = document.createElement("canvas");
+          off.width = canvasW;
+          off.height = canvasH;
+          const octx = off.getContext("2d");
+          const img = octx.createImageData(canvasW, canvasH);
+          const data = img.data;
+
+          const cx = (gridW - 1) / 2;
+
+          for (let gy = 0; gy < gridH; gy++) {
+            const isTopMount = gy < 3;
+            const isNozzleLip = gy >= gridH - 4 && gy < gridH - 1;
+            const isBoreBottom = gy === gridH - 1;
+
+            const halfW = isTopMount
+              ? flangeW
+              : (isNozzleLip ? halfBarrelW + 2 : (isBoreBottom ? halfBarrelW : halfBarrelW));
+
+            for (let gx = 0; gx < gridW; gx++) {
+              const dx = gx - cx;
+              if (Math.abs(dx) > halfW) continue;
+
+              const nx = dx / halfW; // -1 .. +1 across cylinder
+
+              // Dark iron pixel outline
+              if (Math.abs(dx) >= halfW - 0.85) {
+                putTexel(data, canvasW, canvasH, gx, gy, ts, 24, 28, 34, 255);
+                continue;
+              }
+
+              // Dark recessed bore opening at very bottom of nozzle
+              if (isBoreBottom && Math.abs(dx) < halfBarrelW - 1.2) {
+                putTexel(data, canvasW, canvasH, gx, gy, ts, 12, 14, 18, 255);
+                continue;
+              }
+
+              // Brushed steel cylindrical shading with left-of-center specular stripe
+              const highlight = Math.exp(-Math.pow((nx + 0.34) * 2.6, 2));
+              const cyl = Math.sqrt(Math.max(0, 1 - nx * nx));
+              let base = 58 + cyl * 112 + highlight * 82;
+
+              if (isNozzleLip) base += 18;
+              if (gy === 3 || gy === gridH - 4) base *= 0.68; // Groove shadow lines
+
+              const r = dither256(base * 0.95, gx, gy, 22);
+              const g = dither256(base * 0.99, gx, gy, 22);
+              const b = dither256(base * 1.06, gx, gy, 22);
+              putTexel(data, canvasW, canvasH, gx, gy, ts, r, g, b, 255);
+            }
+          }
+
+          octx.putImageData(img, 0, 0);
+          return off;
+        }
+      }
+
+      /* =======================================================================
+         2. STEREO WEB AUDIO API PROCEDURAL SYNTHESIZER (Safe Fallbacks)
+         ======================================================================= */
+      class RetroStereoSynth {
+        constructor() {
+          this.ctx = null;
+          this.masterGain = null;
+          this.compressor = null;
+          this.noiseBuffer = null;
+          this.bitcrushCurve = null;
+
+          this.enabled = true;
+          this.volume = 0.75;
+          this.unlocked = false;
+
+          // Voice limiter so heavy Continuous Rush cascades stay crystal clear
+          this.recentVoices = 0;
+          this.lastVoiceWindow = 0;
+        }
+
+        unlock() {
+          try {
+            if (!this.ctx) {
+              const AudioCtx = window.AudioContext || window.webkitAudioContext;
+              if (!AudioCtx) return false;
+              this.ctx = new AudioCtx();
+
+              this.compressor = this.ctx.createDynamicsCompressor();
+              this.compressor.threshold.value = -14;
+              this.compressor.knee.value = 12;
+              this.compressor.ratio.value = 6;
+              this.compressor.attack.value = 0.002;
+              this.compressor.release.value = 0.09;
+
+              this.masterGain = this.ctx.createGain();
+              this.masterGain.gain.value = this.enabled ? this.volume : 0;
+
+              this.compressor.connect(this.masterGain);
+              this.masterGain.connect(this.ctx.destination);
+
+              // Short white noise buffer for percussive contact transients
+              const sr = this.ctx.sampleRate;
+              this.noiseBuffer = this.ctx.createBuffer(1, Math.floor(sr * 0.35), sr);
+              const channel = this.noiseBuffer.getChannelData(0);
+              for (let i = 0; i < channel.length; i++) {
+                channel[i] = Math.random() * 2 - 1;
+              }
+
+              // Subtle 8-bit Macintosh DAC quantization curve for Smiley "Ah!" voice
+              const levels = 32;
+              this.bitcrushCurve = new Float32Array(256);
+              for (let i = 0; i < 256; i++) {
+                const x = i / 127.5 - 1;
+                this.bitcrushCurve[i] = Math.round(x * levels) / levels;
+              }
+            }
+
+            if (this.ctx.state === "suspended") {
+              const p = this.ctx.resume();
+              if (p && typeof p.catch === "function") p.catch(function () {});
+            }
+
+            this.unlocked = this.ctx.state === "running";
+            this.syncMasterGain();
+            return this.unlocked;
+          } catch (e) {
+            return false;
+          }
+        }
+
+        isReady() {
+          return Boolean(this.ctx && this.ctx.state === "running");
+        }
+
+        syncMasterGain() {
+          if (!this.ctx || !this.masterGain) return;
+          try {
+            const target = this.enabled ? this.volume : 0;
+            this.masterGain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.015);
+          } catch (e) {
+            this.masterGain.gain.value = this.enabled ? this.volume : 0;
+          }
+        }
+
+        setEnabled(flag) {
+          this.enabled = Boolean(flag);
+          if (this.enabled) this.unlock();
+          this.syncMasterGain();
+        }
+
+        setVolume(v01) {
+          this.volume = clamp(v01, 0, 1);
+          this.syncMasterGain();
+        }
+
+        acquireVoiceSlot(priority) {
+          if (!this.enabled || !this.ctx || this.ctx.state !== "running" || this.volume <= 0.001) {
+            return false;
+          }
+          const nowMs = performance.now();
+          if (nowMs - this.lastVoiceWindow > 28) {
+            this.lastVoiceWindow = nowMs;
+            this.recentVoices = 0;
+          }
+          const cap = priority ? 9 : 6;
+          if (this.recentVoices >= cap) return false;
+          this.recentVoices++;
+          return true;
+        }
+
+        /**
+         * Creates a stereo-panned output node with safe fallback if StereoPannerNode is restricted.
+         */
+        makeStereoOut(xNorm) {
+          const dest = this.compressor || this.masterGain;
+          try {
+            if (this.ctx.createStereoPanner) {
+              const panner = this.ctx.createStereoPanner();
+              panner.pan.value = clamp((xNorm - 0.5) * 1.8, -0.9, 0.9);
+              panner.connect(dest);
+              return panner;
+            }
+          } catch (e) {}
+          return dest;
+        }
+
+        /**
+         * 1. Dispenser Tube "Pop / Bloop" Launch Sound
+         */
+        playTubeLaunch(xNorm) {
+          if (!this.acquireVoiceSlot(true)) return;
+          try {
+            const now = this.ctx.currentTime;
+            const out = this.makeStereoOut(xNorm);
+
+            // Hollow pneumatic tube thump
+            const thump = this.ctx.createOscillator();
+            const thumpGain = this.ctx.createGain();
+            thump.type = "triangle";
+            thump.frequency.setValueAtTime(162, now);
+            thump.frequency.exponentialRampToValueAtTime(68, now + 0.08);
+
+            thumpGain.gain.setValueAtTime(0.001, now);
+            thumpGain.gain.linearRampToValueAtTime(0.24, now + 0.007);
+            thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.088);
+
+            thump.connect(thumpGain);
+            thumpGain.connect(out);
+            thump.start(now);
+            thump.stop(now + 0.095);
+
+            // Nozzle mouth "bloop/pop"
+            const pop = this.ctx.createOscillator();
+            const popGain = this.ctx.createGain();
+            pop.type = "sine";
+            pop.frequency.setValueAtTime(205, now + 0.01);
+            pop.frequency.exponentialRampToValueAtTime(425, now + 0.044);
+
+            popGain.gain.setValueAtTime(0.001, now + 0.01);
+            popGain.gain.linearRampToValueAtTime(0.16, now + 0.017);
+            popGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+            pop.connect(popGain);
+            popGain.connect(out);
+            pop.start(now + 0.01);
+            pop.stop(now + 0.055);
+          } catch (e) {}
+        }
+
+        /**
+         * 2. Crisp Glass-on-Glass "Clink / Tick" Collision Sound
+         */
+        playGlassClink(xNorm, impactSpeed, isPin) {
+          if (!this.acquireVoiceSlot(false)) return;
+          try {
+            const norm = clamp((impactSpeed - 24) / 520, 0.06, 1.0);
+            const now = this.ctx.currentTime;
+            const out = this.makeStereoOut(xNorm);
+
+            const jitter = 0.94 + Math.random() * 0.12;
+            const baseFreq = (isPin ? 1840 : 1460) * (0.86 + norm * 0.30) * jitter;
+
+            const osc1 = this.ctx.createOscillator();
+            const osc2 = this.ctx.createOscillator();
+            const mix2 = this.ctx.createGain();
+            const env = this.ctx.createGain();
+
+            osc1.type = "sine";
+            osc1.frequency.setValueAtTime(baseFreq, now);
+            osc1.frequency.exponentialRampToValueAtTime(baseFreq * 0.85, now + 0.036);
+
+            osc2.type = "triangle";
+            osc2.frequency.setValueAtTime(baseFreq * 1.54, now);
+            mix2.gain.value = 0.4;
+
+            const peak = 0.045 + norm * 0.23;
+            const decay = isPin ? 0.042 : 0.029;
+
+            env.gain.setValueAtTime(0.001, now);
+            env.gain.linearRampToValueAtTime(peak, now + 0.0015);
+            env.gain.exponentialRampToValueAtTime(0.001, now + decay);
+
+            osc1.connect(env);
+            osc2.connect(mix2);
+            mix2.connect(env);
+            env.connect(out);
+
+            osc1.start(now);
+            osc2.start(now);
+            osc1.stop(now + decay + 0.006);
+            osc2.stop(now + decay + 0.006);
+
+            // Crisp contact tick transient
+            if (this.noiseBuffer) {
+              const src = this.ctx.createBufferSource();
+              src.buffer = this.noiseBuffer;
+              const bp = this.ctx.createBiquadFilter();
+              bp.type = "bandpass";
+              bp.frequency.value = isPin ? 3000 : 2300;
+              bp.Q.value = 5.5;
+
+              const nGain = this.ctx.createGain();
+              nGain.gain.setValueAtTime(peak * 0.5, now);
+              nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.011);
+
+              src.connect(bp);
+              bp.connect(nGain);
+              nGain.connect(out);
+              src.start(now, Math.random() * 0.15, 0.016);
+            }
+          } catch (e) {}
+        }
+
+        /**
+         * 3. Smiley Marble "Ah!" Voice:
+         * Glottal sawtooth/pulse + vocal formant bandpass filters (~750Hz & ~1200Hz)
+         * + subtle 8-bit quantization wave-shaper.
+         */
+        playSmileyAh(xNorm, impactSpeed, voicePitchScale) {
+          if (!this.acquireVoiceSlot(true)) return;
+          try {
+            const norm = clamp((impactSpeed - 20) / 480, 0.18, 1.0);
+            const now = this.ctx.currentTime;
+            const out = this.makeStereoOut(xNorm);
+
+            const dur = 0.095 + norm * 0.042;
+            const pScale = (voicePitchScale || 1.0) * (0.96 + Math.random() * 0.08);
+            const fStart = (430 + norm * 45) * pScale;
+            const fPeak = fStart * 1.05;
+            const fEnd = (280 + norm * 24) * pScale;
+
+            const saw = this.ctx.createOscillator();
+            saw.type = "sawtooth";
+            saw.frequency.setValueAtTime(fStart, now);
+            saw.frequency.linearRampToValueAtTime(fPeak, now + 0.014);
+            saw.frequency.exponentialRampToValueAtTime(fEnd, now + dur);
+
+            const pulse = this.ctx.createOscillator();
+            pulse.type = "square";
+            pulse.frequency.setValueAtTime(fStart * 1.003, now);
+            pulse.frequency.exponentialRampToValueAtTime(fEnd * 0.997, now + dur);
+
+            const pulseGain = this.ctx.createGain();
+            pulseGain.gain.value = 0.30;
+
+            const glottal = this.ctx.createGain();
+            saw.connect(glottal);
+            pulse.connect(pulseGain);
+            pulseGain.connect(glottal);
+
+            // Formant 1 (~750Hz open "Ah" vowel)
+            const f1 = this.ctx.createBiquadFilter();
+            f1.type = "bandpass";
+            f1.frequency.setValueAtTime(755, now);
+            f1.frequency.linearRampToValueAtTime(685, now + dur);
+            f1.Q.value = 5.4;
+            const f1G = this.ctx.createGain();
+            f1G.gain.value = 1.4;
+
+            // Formant 2 (~1200Hz oral cavity)
+            const f2 = this.ctx.createBiquadFilter();
+            f2.type = "bandpass";
+            f2.frequency.setValueAtTime(1215, now);
+            f2.frequency.linearRampToValueAtTime(1120, now + dur);
+            f2.Q.value = 6.0;
+            const f2G = this.ctx.createGain();
+            f2G.gain.value = 0.98;
+
+            // Formant 3 (~2450Hz vocal presence)
+            const f3 = this.ctx.createBiquadFilter();
+            f3.type = "bandpass";
+            f3.frequency.value = 2460;
+            f3.Q.value = 7.2;
+            const f3G = this.ctx.createGain();
+            f3G.gain.value = 0.34;
+
+            glottal.connect(f1); f1.connect(f1G);
+            glottal.connect(f2); f2.connect(f2G);
+            glottal.connect(f3); f3.connect(f3G);
+
+            const sum = this.ctx.createGain();
+            f1G.connect(sum);
+            f2G.connect(sum);
+            f3G.connect(sum);
+
+            const shaper = this.ctx.createWaveShaper();
+            if (this.bitcrushCurve) shaper.curve = this.bitcrushCurve;
+
+            const lpf = this.ctx.createBiquadFilter();
+            lpf.type = "lowpass";
+            lpf.frequency.value = 5000;
+
+            const env = this.ctx.createGain();
+            const peak = 0.24 + norm * 0.24;
+            env.gain.setValueAtTime(0.001, now);
+            env.gain.linearRampToValueAtTime(peak, now + 0.009);
+            env.gain.setValueAtTime(peak * 0.86, now + dur * 0.45);
+            env.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+            sum.connect(shaper);
+            shaper.connect(lpf);
+            lpf.connect(env);
+            env.connect(out);
+
+            saw.start(now);
+            pulse.start(now);
+            saw.stop(now + dur + 0.012);
+            pulse.stop(now + dur + 0.012);
+          } catch (e) {}
+        }
+
+        /**
+         * 4. Cube Hollow Plastic "Clack" Bounce Sound
+         */
+        playCubeClack(xNorm, impactSpeed) {
+          if (!this.acquireVoiceSlot(false)) return;
+          try {
+            const norm = clamp((impactSpeed - 24) / 500, 0.08, 1.0);
+            const now = this.ctx.currentTime;
+            const out = this.makeStereoOut(xNorm);
+
+            const pitch = (315 + Math.random() * 50) * (0.9 + norm * 0.22);
+            const osc = this.ctx.createOscillator();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(pitch, now);
+            osc.frequency.exponentialRampToValueAtTime(125, now + 0.04);
+
+            const peak = 0.09 + norm * 0.25;
+            const env = this.ctx.createGain();
+            env.gain.setValueAtTime(0.001, now);
+            env.gain.linearRampToValueAtTime(peak, now + 0.002);
+            env.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+
+            osc.connect(env);
+            env.connect(out);
+            osc.start(now);
+            osc.stop(now + 0.05);
+
+            if (this.noiseBuffer) {
+              const src = this.ctx.createBufferSource();
+              src.buffer = this.noiseBuffer;
+              const bp = this.ctx.createBiquadFilter();
+              bp.type = "bandpass";
+              bp.frequency.value = 820 + Math.random() * 140;
+              bp.Q.value = 4.0;
+
+              const nGain = this.ctx.createGain();
+              nGain.gain.setValueAtTime(peak * 0.85, now);
+              nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+
+              src.connect(bp);
+              bp.connect(nGain);
+              nGain.connect(out);
+              src.start(now, Math.random() * 0.15, 0.03);
+            }
+          } catch (e) {}
+        }
+
+        /**
+         * Subtle UI / Pin Editor chirp
+         */
+        playPinEditChirp(xNorm, isRemove) {
+          if (!this.acquireVoiceSlot(true)) return;
+          try {
+            const now = this.ctx.currentTime;
+            const out = this.makeStereoOut(xNorm);
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(isRemove ? 680 : 920, now);
+            osc.frequency.exponentialRampToValueAtTime(isRemove ? 340 : 1320, now + 0.045);
+            gain.gain.setValueAtTime(0.13, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+            osc.connect(gain);
+            gain.connect(out);
+            osc.start(now);
+            osc.stop(now + 0.055);
+          } catch (e) {}
+        }
+      }
+
+      /* =======================================================================
+         3. MAIN AFTER DARK 2.0 "MARBLES" SIMULATION & UI CONTROLLER
+         ======================================================================= */
+      class AfterDarkMarbles {
+        constructor() {
+          this.canvas = document.getElementById("marbles-canvas");
+          this.ctx = this.canvas.getContext("2d", { alpha: false });
+
+          this.sprites = new RetroSpriteBank();
+          this.synth = new RetroStereoSynth();
+
+          this.width = window.innerWidth;
+          this.height = window.innerHeight;
+          this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+          // Configurable Settings
+          this.state = {
+            pinCount: 32,          // 15 - 80
+            pinRadiusSetting: 22,  // 13 - 32 px base
+            dropMode: "single",    // "single" | "rush"
+            spawnSpeed: 5,         // 1 - 10
+            resetIntervalSec: 60,  // 0 (OFF) | 30 | 60 | 120
+            crtEnabled: false,
+            editMode: false,
+            editDeleteTap: false,
+            panelHidden: false
+          };
+
+          // Load safe non-layout user preferences (never hide control panel on load!)
+          this.loadPreferencesSafely();
+
+          // Effective pixel radii scaled gently for screen size
+          this.pinRadius = 22;
+          this.marbleRadius = 10;
+
+          // World Entities
+          this.pins = [];
+          this.activeMarbles = [];
+          this.settledMarbles = [];
+
+          // Animated Top Metallic Dispenser Chute State
+          this.dispenser = {
+            x: Math.round(this.width * 0.5),
+            targetX: Math.round(this.width * 0.5),
+            pendingDrop: null, // { x, kind, isAuto }
+            queue: [],         // Manual queued drops
+            recoil: 0,         // 0..1 vertical recoil animation
+            cooldown: 0.25
+          };
+
+          // Reset Timer & Retro Scanline Wipe State
+          this.resetRemaining = this.state.resetIntervalSec;
+          this.wipeProgress = 0;
+
+          // Pin Edit Interaction State
+          this.draggingPin = null;
+          this.dragOffsetX = 0;
+          this.dragOffsetY = 0;
+          this.hoveredPin = null;
+          this.isDraggingSlider = false;
+          this.panelHasCustomPos = false;
+
+          this.lastTimestamp = performance.now();
+
+          this.resizeCanvas(true);
+          this.generatePins();
+          this.bindControlsAndEvents();
+          this.syncAllControlsUI();
+        }
+
+        loadPreferencesSafely() {
+          try {
+            const raw = window.localStorage.getItem("ad2_marbles_prefs_v2");
+            if (!raw) return;
+            const saved = JSON.parse(raw);
+            if (typeof saved.pinCount === "number") {
+              this.state.pinCount = clamp(Math.round(saved.pinCount), 15, 80);
+            }
+            if (typeof saved.pinRadiusSetting === "number") {
+              this.state.pinRadiusSetting = clamp(Math.round(saved.pinRadiusSetting), 13, 32);
+            }
+            if (saved.dropMode === "single" || saved.dropMode === "rush") {
+              this.state.dropMode = saved.dropMode;
+            }
+            if (typeof saved.spawnSpeed === "number") {
+              this.state.spawnSpeed = clamp(Math.round(saved.spawnSpeed), 1, 10);
+            }
+            if ([0, 30, 60, 120].indexOf(saved.resetIntervalSec) !== -1) {
+              this.state.resetIntervalSec = saved.resetIntervalSec;
+            }
+            if (typeof saved.crtEnabled === "boolean") {
+              this.state.crtEnabled = saved.crtEnabled;
+            }
+            if (typeof saved.volume === "number") {
+              this.synth.setVolume(clamp(saved.volume, 0, 1));
+            }
+          } catch (e) {}
+        }
+
+        savePreferencesSafely() {
+          try {
+            const payload = {
+              pinCount: this.state.pinCount,
+              pinRadiusSetting: this.state.pinRadiusSetting,
+              dropMode: this.state.dropMode,
+              spawnSpeed: this.state.spawnSpeed,
+              resetIntervalSec: this.state.resetIntervalSec,
+              crtEnabled: this.state.crtEnabled,
+              volume: this.synth.volume
+            };
+            window.localStorage.setItem("ad2_marbles_prefs_v2", JSON.stringify(payload));
+          } catch (e) {}
+        }
+
+        computeGeometry() {
+          const screenFactor = clamp(Math.sqrt((this.width * this.height) / (1280 * 800)), 0.68, 1.15);
+          this.pinRadius = Math.max(10, Math.round((this.state.pinRadiusSetting * screenFactor) / 2) * 2);
+          this.marbleRadius = Math.max(7, Math.round((10.5 * screenFactor) / 1) * 1);
+          this.sprites.rebuildAll(this.pinRadius, this.marbleRadius);
+        }
+
+        resizeCanvas(isInitial) {
+          const prevW = this.width || window.innerWidth;
+          const prevH = this.height || window.innerHeight;
+
+          this.width = Math.max(240, window.innerWidth);
+          this.height = Math.max(240, window.innerHeight);
+          this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+          this.canvas.width = Math.floor(this.width * this.dpr);
+          this.canvas.height = Math.floor(this.height * this.dpr);
+          this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+          this.ctx.imageSmoothingEnabled = false;
+
+          this.computeGeometry();
+
+          if (!isInitial && prevW > 0 && prevH > 0) {
+            const sx = this.width / prevW;
+            const sy = this.height / prevH;
+            const dh = this.height - prevH;
+
+            const bounds = this.getPinFieldBounds();
+            for (let i = 0; i < this.pins.length; i++) {
+              const p = this.pins[i];
+              p.x = clamp(Math.round(p.x * sx), bounds.minX, bounds.maxX);
+              p.y = clamp(Math.round(p.y * sy), bounds.minY, bounds.maxY);
+            }
+
+            for (let i = 0; i < this.settledMarbles.length; i++) {
+              const m = this.settledMarbles[i];
+              m.x = clamp(m.x * sx, this.marbleRadius, this.width - this.marbleRadius);
+              m.y = clamp(m.y + dh, this.marbleRadius, this.height - this.marbleRadius);
+              m.r = this.marbleRadius;
+            }
+
+            this.dispenser.x = clamp(this.dispenser.x * sx, 30, this.width - 30);
+            this.dispenser.targetX = clamp(this.dispenser.targetX * sx, 30, this.width - 30);
+          }
+
+          this.clampPanelInsideViewport();
+        }
+
+        getPinFieldBounds() {
+          const chuteClearY = Math.max(76, this.pinRadius + this.marbleRadius * 4.5);
+          const floorClearY = Math.max(this.pinRadius + this.marbleRadius * 4.0, this.height * 0.10);
+          const sidePad = this.pinRadius + this.marbleRadius * 2.3;
+
+          return {
+            minX: Math.min(sidePad, this.width * 0.45),
+            maxX: Math.max(this.width * 0.55, this.width - sidePad),
+            minY: Math.min(chuteClearY, this.height * 0.45),
+            maxY: Math.max(this.height * 0.55, this.height - floorClearY)
+          };
+        }
+
+        /**
+         * Places static cat's-eye glass pins with progressive spacing relaxation
+         * so 15–80 pins distribute evenly while keeping navigable channels for marbles.
+         */
+        generatePins() {
+          const targetCount = this.state.pinCount;
+          const b = this.getPinFieldBounds();
+          const spanW = Math.max(20, b.maxX - b.minX);
+          const spanH = Math.max(20, b.maxY - b.minY);
+
+          const idealGap = this.pinRadius * 2 + this.marbleRadius * 2.75;
+          const mediumGap = this.pinRadius * 2 + this.marbleRadius * 2.15;
+          const tightGap = this.pinRadius * 2 + 5;
+
+          const placedPins = [];
+          for (let i = 0; i < targetCount; i++) {
+            for (let attempt = 0; attempt < 280; attempt++) {
+              const reqGap = attempt < 130 ? idealGap : (attempt < 230 ? mediumGap : tightGap);
+              const px = b.minX + Math.random() * spanW;
+              const py = b.minY + Math.random() * spanH;
+
+              let ok = true;
+              for (let j = 0; j < placedPins.length; j++) {
+                const dx = px - placedPins[j].x;
+                const dy = py - placedPins[j].y;
+                if (dx * dx + dy * dy < reqGap * reqGap) {
+                  ok = false;
+                  break;
+                }
+              }
+
+              if (ok) {
+                placedPins.push({
+                  x: Math.round(px),
+                  y: Math.round(py),
+                  variant: i % 4,
+                  shimmer: 0
+                });
+                break;
+              }
+            }
+          }
+
+          this.pins = placedPins;
+          this.wakeSettledMarblesNearPins();
+          this.updateStatsBar();
+        }
+
+        /**
+         * Adjusts pin count smoothly when dragging the Pin Count slider (15–80).
+         */
+        adjustPinCountLive(newCount) {
+          this.state.pinCount = clamp(newCount, 15, 80);
+          if (this.pins.length > this.state.pinCount) {
+            this.pins.length = this.state.pinCount;
+          } else if (this.pins.length < this.state.pinCount) {
+            const b = this.getPinFieldBounds();
+            const spanW = Math.max(20, b.maxX - b.minX);
+            const spanH = Math.max(20, b.maxY - b.minY);
+            const safeGap = this.pinRadius * 2 + this.marbleRadius * 2.15;
+            const tightGap = this.pinRadius * 2 + 5;
+
+            while (this.pins.length < this.state.pinCount) {
+              let added = false;
+              for (let attempt = 0; attempt < 220; attempt++) {
+                const gap = attempt < 150 ? safeGap : tightGap;
+                const px = b.minX + Math.random() * spanW;
+                const py = b.minY + Math.random() * spanH;
+                let ok = true;
+                for (let j = 0; j < this.pins.length; j++) {
+                  const dx = px - this.pins[j].x;
+                  const dy = py - this.pins[j].y;
+                  if (dx * dx + dy * dy < gap * gap) {
+                    ok = false;
+                    break;
+                  }
+                }
+                if (ok) {
+                  this.pins.push({
+                    x: Math.round(px),
+                    y: Math.round(py),
+                    variant: this.pins.length % 4,
+                    shimmer: 0.45
+                  });
+                  added = true;
+                  break;
+                }
+              }
+              if (!added) break;
+            }
+            this.wakeSettledMarblesNearPins();
+          }
+          this.updateStatsBar();
+        }
+
+        wakeSettledMarblesNearPins() {
+          const minDist = this.pinRadius + this.marbleRadius + 2;
+          for (let s = this.settledMarbles.length - 1; s >= 0; s--) {
+            const sm = this.settledMarbles[s];
+            for (let p = 0; p < this.pins.length; p++) {
+              const pin = this.pins[p];
+              const dx = sm.x - pin.x;
+              const dy = sm.y - pin.y;
+              if (dx * dx + dy * dy < minDist * minDist) {
+                this.settledMarbles.splice(s, 1);
+                this.activeMarbles.push({
+                  x: sm.x,
+                  y: sm.y,
+                  vx: (Math.random() - 0.5) * 40,
+                  vy: -10,
+                  r: this.marbleRadius,
+                  kind: sm.kind,
+                  color: sm.color,
+                  angle: sm.angle,
+                  omega: 0,
+                  surprisedTimer: 0,
+                  soundCooldown: 0.04,
+                  voicePitch: 1.0,
+                  restTimer: 0,
+                  stuckTimer: 0,
+                  anchorX: sm.x,
+                  anchorY: sm.y,
+                  isAuto: false
+                });
+                break;
+              }
+            }
+          }
+        }
+
+        /**
+         * Chooses a valid horizontal launch X coordinate that isn't blocked up to the nozzle.
+         */
+        pickOpenDropX() {
+          const pad = Math.max(this.marbleRadius + 16, 26);
+          const span = Math.max(20, this.width - pad * 2);
+          for (let tries = 0; tries < 18; tries++) {
+            const candidateX = pad + Math.random() * span;
+            let blockedAtTop = false;
+            for (let i = 0; i < this.settledMarbles.length; i++) {
+              const sm = this.settledMarbles[i];
+              if (sm.y < 76 && Math.abs(sm.x - candidateX) < this.marbleRadius * 2.4) {
+                blockedAtTop = true;
+                break;
+              }
+            }
+            if (!blockedAtTop) return Math.round(candidateX);
+          }
+          return Math.round(pad + Math.random() * span);
+        }
+
+        chooseRandomMarbleSpec() {
+          const r = Math.random();
+          if (r < 0.08) {
+            return { kind: "cube", color: "multi" };
+          }
+          if (r < 0.22) {
+            return { kind: "smiley", color: "yellow" };
+          }
+          const c = MARBLE_COLOR_KEYS[Math.floor(Math.random() * MARBLE_COLOR_KEYS.length)];
+          return { kind: "marble", color: c };
+        }
+
+        /**
+         * Requests the top metallic dispenser chute to glide to X and launch a marble.
+         */
+        requestManualDrop(kind, customX) {
+          const pad = Math.max(this.marbleRadius + 14, 24);
+          const targetX = typeof customX === "number"
+            ? clamp(Math.round(customX), pad, this.width - pad)
+            : this.pickOpenDropX();
+
+          if (this.dispenser.queue.length < 8) {
+            this.dispenser.queue.push({
+              x: targetX,
+              kind: kind || "random",
+              isAuto: false
+            });
+          }
+        }
+
+        /**
+         * Actually pops a marble entity out of the metallic dispenser chute mouth.
+         */
+        emitMarbleFromChute(dropOrder) {
+          const chuteSprite = this.sprites.dispenserSprite;
+          const nozzleMouthY = (chuteSprite ? chuteSprite.height : 32) + this.marbleRadius * 0.45;
+          const x = clamp(dropOrder.x, this.marbleRadius + 4, this.width - this.marbleRadius - 4);
+
+          let spec;
+          if (dropOrder.kind === "smiley") {
+            spec = { kind: "smiley", color: "yellow" };
+          } else if (dropOrder.kind === "cube") {
+            spec = { kind: "cube", color: "multi" };
+          } else if (dropOrder.kind === "marble") {
+            const c = MARBLE_COLOR_KEYS[Math.floor(Math.random() * MARBLE_COLOR_KEYS.length)];
+            spec = { kind: "marble", color: c };
+          } else {
+            spec = this.chooseRandomMarbleSpec();
+          }
+
+          this.activeMarbles.push({
+            x: x,
+            y: nozzleMouthY,
+            vx: (Math.random() - 0.5) * 42,
+            vy: 62 + Math.random() * 26,
+            r: this.marbleRadius,
+            kind: spec.kind,
+            color: spec.color,
+            angle: Math.random() * Math.PI * 2,
+            omega: (Math.random() - 0.5) * 3.8,
+            surprisedTimer: 0,
+            soundCooldown: 0,
+            voicePitch: 0.93 + Math.random() * 0.15,
+            restTimer: 0,
+            stuckTimer: 0,
+            anchorX: x,
+            anchorY: nozzleMouthY,
+            isAuto: Boolean(dropOrder.isAuto)
+          });
+
+          this.dispenser.recoil = 1.0;
+          this.synth.playTubeLaunch(x / Math.max(1, this.width));
+          this.updateStatsBar();
+        }
+
+        clearMarbles(alsoRefreshPins) {
+          this.activeMarbles = [];
+          this.settledMarbles = [];
+          this.dispenser.queue = [];
+          this.dispenser.pendingDrop = null;
+          this.dispenser.cooldown = 0.20;
+          this.wipeProgress = 1.0;
+          if (alsoRefreshPins) {
+            this.generatePins();
+          }
+          if (this.state.resetIntervalSec > 0) {
+            this.resetRemaining = this.state.resetIntervalSec;
+          }
+          this.updateStatsBar();
+        }
+
+        handleMarbleImpact(m, impactSpeed, isPin) {
+          if (impactSpeed < 26) return;
+
+          // Sensitive Smiley Marble switches to surprised ":O" face for ~350ms!
+          if (m.kind === "smiley") {
+            m.surprisedTimer = 0.35;
+          }
+
+          if (m.soundCooldown > 0) return;
+          m.soundCooldown = 0.036;
+
+          const xNorm = m.x / Math.max(1, this.width);
+          if (m.kind === "smiley") {
+            this.synth.playSmileyAh(xNorm, impactSpeed, m.voicePitch);
+          } else if (m.kind === "cube") {
+            this.synth.playCubeClack(xNorm, impactSpeed);
+          } else {
+            this.synth.playGlassClink(xNorm, impactSpeed, isPin);
+          }
+        }
+
+        /* =====================================================================
+           4. SUB-STEPPED 60FPS 2D RIGID PHYSICS & DISPENSER UPDATE
+           ===================================================================== */
+        update(dt) {
+          // Decay screen clear wipe curtain
+          if (this.wipeProgress > 0) {
+            this.wipeProgress = Math.max(0, this.wipeProgress - dt * 3.6);
+          }
+
+          // Decay pin hit shimmer
+          for (let i = 0; i < this.pins.length; i++) {
+            if (this.pins[i].shimmer > 0) {
+              this.pins[i].shimmer = Math.max(0, this.pins[i].shimmer - dt * 4.5);
+            }
+          }
+
+          // Decay dispenser recoil spring
+          if (this.dispenser.recoil > 0) {
+            this.dispenser.recoil = Math.max(0, this.dispenser.recoil - dt * 6.5);
+          }
+
+          // Pause automatic launching & board reset countdown during Pin Edit Mode
+          if (!this.state.editMode) {
+            // Automatic Board Reset Timer (30s / 60s / 120s)
+            if (this.state.resetIntervalSec > 0) {
+              this.resetRemaining -= dt;
+              if (this.resetRemaining <= 0) {
+                this.clearMarbles(true);
+                this.showToast("自動リセット: ピン配置を更新しました");
+              }
+            }
+
+            this.updateDispenser(dt);
+          }
+
+          // Recycle oldest settled marbles gracefully if infinite pile exceeds 240
+          if (this.settledMarbles.length > 240) {
+            this.settledMarbles.splice(0, this.settledMarbles.length - 240);
+          }
+
+          // 8 Sub-steps per frame so fast-falling marbles NEVER tunnel through pins
+          const SUBSTEPS = 8;
+          const subDt = dt / SUBSTEPS;
+          const gravity = 820;
+          const pinRestitution = 0.72;
+          const pileRestitution = 0.46;
+          const wallRestitution = 0.66;
+
+          for (let step = 0; step < SUBSTEPS; step++) {
+            // 1. Integrate active marbles & resolve wall, floor, pin, and settled-pile collisions
+            for (let i = 0; i < this.activeMarbles.length; i++) {
+              const m = this.activeMarbles[i];
+
+              m.vy += gravity * subDt;
+              if (m.vy > 900) m.vy = 900;
+
+              m.x += m.vx * subDt;
+              m.y += m.vy * subDt;
+              m.angle += m.omega * subDt;
+
+              // Left & Right Walls
+              if (m.x < m.r) {
+                const imp = Math.abs(m.vx);
+                m.x = m.r;
+                m.vx = Math.abs(m.vx) * wallRestitution;
+                m.omega = (m.vy / m.r) * 0.4;
+                this.handleMarbleImpact(m, imp, false);
+              } else if (m.x > this.width - m.r) {
+                const imp = Math.abs(m.vx);
+                m.x = this.width - m.r;
+                m.vx = -Math.abs(m.vx) * wallRestitution;
+                m.omega = -(m.vy / m.r) * 0.4;
+                this.handleMarbleImpact(m, imp, false);
+              }
+
+              // Floor Bounce
+              if (m.y > this.height - m.r) {
+                const imp = Math.abs(m.vy);
+                m.y = this.height - m.r;
+                if (m.vy > 0) {
+                  m.vy = -m.vy * pileRestitution;
+                  if (Math.abs(m.vy) < 25) m.vy = 0;
+                }
+                m.vx *= 0.95;
+                if (m.kind === "cube" && imp > 45) {
+                  m.omega += Math.sin(m.angle * 4) * 2.6;
+                } else {
+                  m.omega = m.vx / m.r;
+                }
+                this.handleMarbleImpact(m, imp, false);
+              }
+
+              // Collide with Cat's-Eye Glass Pins
+              const pinDistReq = m.r + this.pinRadius;
+              const pinDistReqSq = pinDistReq * pinDistReq;
+
+              for (let p = 0; p < this.pins.length; p++) {
+                const pin = this.pins[p];
+                const dx = m.x - pin.x;
+                if (Math.abs(dx) >= pinDistReq) continue;
+                const dy = m.y - pin.y;
+                if (Math.abs(dy) >= pinDistReq) continue;
+
+                const dSq = dx * dx + dy * dy;
+                if (dSq < pinDistReqSq) {
+                  const dist = Math.sqrt(dSq) || 0.001;
+                  const nx = dx / dist;
+                  const ny = dy / dist;
+
+                  const overlap = pinDistReq - dist;
+                  m.x += nx * overlap;
+                  m.y += ny * overlap;
+
+                  const vn = m.vx * nx + m.vy * ny;
+                  if (vn < 0) {
+                    const imp = -vn;
+                    m.vx -= (1 + pinRestitution) * vn * nx;
+                    m.vy -= (1 + pinRestitution) * vn * ny;
+
+                    // Prevent dead-center balancing on top of a spherical pin
+                    if (Math.abs(nx) < 0.08 && ny < -0.92) {
+                      m.vx += (Math.random() < 0.5 ? -1 : 1) * (24 + Math.random() * 18);
+                    }
+
+                    // Tangential spin & Cube corner torque
+                    const vt = -m.vx * ny + m.vy * nx;
+                    if (m.kind === "cube") {
+                      const cornerTorque = Math.sin(m.angle * 4) * 32;
+                      m.vx += -ny * cornerTorque * 0.36;
+                      m.omega = (vt / m.r) * 0.9 + Math.cos(m.angle * 4) * 3.6;
+                    } else {
+                      m.omega = (vt / m.r) * 0.72;
+                    }
+
+                    if (imp > 32) {
+                      pin.shimmer = Math.max(pin.shimmer, clamp(imp / 340, 0.28, 1.0));
+                    }
+                    this.handleMarbleImpact(m, imp, true);
+                  }
+                }
+              }
+
+              // Collide with Settled Marbles at the Bottom
+              for (let s = this.settledMarbles.length - 1; s >= 0; s--) {
+                const sm = this.settledMarbles[s];
+                const minDist = m.r + sm.r;
+                const dx = m.x - sm.x;
+                if (Math.abs(dx) >= minDist) continue;
+                const dy = m.y - sm.y;
+                if (Math.abs(dy) >= minDist) continue;
+
+                const dSq = dx * dx + dy * dy;
+                if (dSq < minDist * minDist) {
+                  const dist = Math.sqrt(dSq) || 0.001;
+                  const nx = dx / dist;
+                  const ny = dy / dist;
+
+                  const overlap = minDist - dist;
+                  m.x += nx * overlap;
+                  m.y += ny * overlap;
+
+                  const vn = m.vx * nx + m.vy * ny;
+                  if (vn < 0) {
+                    const imp = -vn;
+                    m.vx -= (1 + pileRestitution) * vn * nx;
+                    m.vy -= (1 + pileRestitution) * vn * ny;
+
+                    const tx = -ny;
+                    const ty = nx;
+                    const vt = m.vx * tx + m.vy * ty;
+                    m.vx -= vt * 0.14 * tx;
+                    m.vy -= vt * 0.14 * ty;
+                    m.omega = (vt / m.r) * 0.78;
+
+                    this.handleMarbleImpact(m, imp, false);
+                  }
+                }
+              }
+            }
+
+            // 2. Active Marble-to-Marble Elastic Collisions
+            for (let i = 0; i < this.activeMarbles.length; i++) {
+              for (let j = i + 1; j < this.activeMarbles.length; j++) {
+                const a = this.activeMarbles[i];
+                const b = this.activeMarbles[j];
+                const minDist = a.r + b.r;
+                const dx = b.x - a.x;
+                if (Math.abs(dx) >= minDist) continue;
+                const dy = b.y - a.y;
+                if (Math.abs(dy) >= minDist) continue;
+
+                const dSq = dx * dx + dy * dy;
+                if (dSq < minDist * minDist) {
+                  const dist = Math.sqrt(dSq) || 0.001;
+                  const nx = dx / dist;
+                  const ny = dy / dist;
+                  const halfOverlap = (minDist - dist) * 0.5;
+
+                  a.x -= nx * halfOverlap;
+                  a.y -= ny * halfOverlap;
+                  b.x += nx * halfOverlap;
+                  b.y += ny * halfOverlap;
+
+                  const rvx = b.vx - a.vx;
+                  const rvy = b.vy - a.vy;
+                  const vn = rvx * nx + rvy * ny;
+
+                  if (vn < 0) {
+                    const impulse = -(1 + 0.65) * vn * 0.5;
+                    a.vx -= impulse * nx;
+                    a.vy -= impulse * ny;
+                    b.vx += impulse * nx;
+                    b.vy += impulse * ny;
+
+                    const spinKick = (-rvx * ny + rvy * nx) * 0.25;
+                    a.omega += spinKick / a.r;
+                    b.omega -= spinKick / b.r;
+
+                    const imp = Math.abs(vn);
+                    this.handleMarbleImpact(a, imp, false);
+                    this.handleMarbleImpact(b, imp, false);
+                  }
+                }
+              }
+            }
+          }
+
+          // 3. Timers & Bottom Pile Resting Lock
+          for (let i = this.activeMarbles.length - 1; i >= 0; i--) {
+            const m = this.activeMarbles[i];
+
+            if (m.surprisedTimer > 0) m.surprisedTimer = Math.max(0, m.surprisedTimer - dt);
+            if (m.soundCooldown > 0) m.soundCooldown = Math.max(0, m.soundCooldown - dt);
+
+            const speed = Math.hypot(m.vx, m.vy);
+            let supported = m.y >= this.height - m.r - 2.2;
+
+            if (!supported) {
+              for (let s = this.settledMarbles.length - 1; s >= 0; s--) {
+                const sm = this.settledMarbles[s];
+                if (sm.y >= m.y - m.r * 0.35) {
+                  if (Math.hypot(m.x - sm.x, m.y - sm.y) <= m.r + sm.r + 2.4) {
+                    supported = true;
+                    break;
+                  }
+                }
+              }
+            }
+
+            if (supported && speed < 35) {
+              m.vx *= Math.pow(0.08, dt);
+              m.vy *= Math.pow(0.08, dt);
+              // Align resting cubes neatly toward nearest 90-degree face
+              if (m.kind === "cube") {
+                const snapAngle = Math.round(m.angle / (Math.PI / 2)) * (Math.PI / 2);
+                m.angle += (snapAngle - m.angle) * Math.min(1, dt * 12);
+                m.omega *= 0.7;
+              }
+              m.restTimer += dt;
+            } else {
+              m.restTimer = Math.max(0, m.restTimer - dt * 2.0);
+            }
+
+            if (Math.hypot(m.x - m.anchorX, m.y - m.anchorY) > 7) {
+              m.anchorX = m.x;
+              m.anchorY = m.y;
+              m.stuckTimer = 0;
+            } else {
+              m.stuckTimer += dt;
+            }
+
+            if (m.restTimer >= 0.15 || (supported && speed < 6.5 && m.restTimer > 0.04) || m.stuckTimer >= 3.2) {
+              this.activeMarbles.splice(i, 1);
+              this.settledMarbles.push({
+                x: m.x,
+                y: m.y,
+                r: m.r,
+                kind: m.kind,
+                color: m.color,
+                angle: m.angle
+              });
+
+              // Trigger screen clear if pile grows right up to the dispenser chute
+              if (m.y < 58 && this.settledMarbles.length > 25) {
+                this.clearMarbles(false);
+                this.showToast("画面上部まで積み上がったためクリアしました");
+                break;
+              }
+              this.updateStatsBar();
+            }
+          }
+
+          this.updateResetCountdownUI();
+        }
+
+        /**
+         * Controls horizontal sliding & launch cadence of the top metallic dispenser tube.
+         */
+        updateDispenser(dt) {
+          const disp = this.dispenser;
+          const speedLv = this.state.spawnSpeed; // 1 .. 10
+
+          if (disp.cooldown > 0) {
+            disp.cooldown = Math.max(0, disp.cooldown - dt);
+          }
+
+          // Priority 1: Manual user drops queued via click / Space / S / C
+          if (!disp.pendingDrop && disp.queue.length > 0) {
+            disp.pendingDrop = disp.queue.shift();
+            disp.targetX = disp.pendingDrop.x;
+          }
+
+          // Priority 2: Automatic screensaver drops
+          if (!disp.pendingDrop && disp.cooldown <= 0) {
+            if (this.state.dropMode === "single") {
+              const hasActiveAuto = this.activeMarbles.some(function (m) { return m.isAuto; });
+              if (!hasActiveAuto) {
+                const x = this.pickOpenDropX();
+                disp.pendingDrop = { x: x, kind: "random", isAuto: true };
+                disp.targetX = x;
+              }
+            } else {
+              // Continuous Rush mode: cadence scales with Spawn Speed slider
+              const maxActive = 12 + speedLv * 3;
+              if (this.activeMarbles.length < maxActive) {
+                const x = this.pickOpenDropX();
+                disp.pendingDrop = { x: x, kind: "random", isAuto: true };
+                disp.targetX = x;
+              }
+            }
+          }
+
+          // Slide metallic dispenser horizontally toward targetX
+          const isManual = disp.pendingDrop && !disp.pendingDrop.isAuto;
+          const slideSpeed = isManual
+            ? 2400
+            : (280 + speedLv * 145);
+
+          const dx = disp.targetX - disp.x;
+          if (Math.abs(dx) <= slideSpeed * dt) {
+            disp.x = disp.targetX;
+            if (disp.pendingDrop) {
+              const order = disp.pendingDrop;
+              disp.pendingDrop = null;
+              this.emitMarbleFromChute(order);
+
+              if (order.isAuto) {
+                disp.cooldown = this.state.dropMode === "single"
+                  ? Math.max(0.05, 0.42 - speedLv * 0.035)
+                  : Math.max(0.11, 0.92 - speedLv * 0.08);
+              }
+            }
+          } else {
+            disp.x += Math.sign(dx) * slideSpeed * dt;
+          }
+        }
+
+        /* =====================================================================
+           5. PIXEL-ART CANVAS RENDERER
+           ===================================================================== */
+        drawMarbleOrCube(m, isSettled) {
+          let frameList;
+          if (m.kind === "smiley") {
+            frameList = (!isSettled && m.surprisedTimer > 0)
+              ? this.sprites.smileySurprisedFrames
+              : this.sprites.smileyNormalFrames;
+          } else if (m.kind === "cube") {
+            frameList = this.sprites.cubeFrames;
+          } else {
+            frameList = this.sprites.marbleFrames[m.color] || this.sprites.marbleFrames.ruby;
+          }
+
+          const len = frameList.length;
+          if (!len) return;
+          const idx = ((Math.round((m.angle / (Math.PI * 2)) * len) % len) + len) % len;
+          const sprite = frameList[idx];
+          if (!sprite) return;
+
+          this.ctx.drawImage(
+            sprite,
+            Math.round(m.x - sprite.width * 0.5),
+            Math.round(m.y - sprite.height * 0.5)
+          );
+        }
+
+        render() {
+          const ctx = this.ctx;
+
+          // 1. Pure Pitch-Black (#000000) Background
+          ctx.fillStyle = "#000000";
+          ctx.fillRect(0, 0, this.width, this.height);
+
+          // Subtle Top Rail Track for the Metallic Dispenser Tube
+          ctx.fillStyle = "#161b22";
+          ctx.fillRect(0, 0, this.width, 4);
+          ctx.fillStyle = "#2d3644";
+          ctx.fillRect(0, 4, this.width, 1);
+
+          // Pin Edit Mode Guide Lines
+          if (this.state.editMode) {
+            const b = this.getPinFieldBounds();
+            ctx.save();
+            ctx.strokeStyle = "#1d3d4a";
+            ctx.setLineDash([4, 6]);
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, b.minY);
+            ctx.lineTo(this.width, b.minY);
+            ctx.moveTo(0, b.maxY);
+            ctx.lineTo(this.width, b.maxY);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // 2. Cat's-Eye Clear Glass Pins + Hit Shimmer
+          for (let i = 0; i < this.pins.length; i++) {
+            const pin = this.pins[i];
+            const sprite = this.sprites.pinSprites[pin.variant & 3];
+            if (sprite) {
+              const px = Math.round(pin.x - sprite.width * 0.5);
+              const py = Math.round(pin.y - sprite.height * 0.5);
+              ctx.drawImage(sprite, px, py);
+
+              if (pin.shimmer > 0.02 && this.sprites.pinShimmerSprite) {
+                ctx.save();
+                ctx.globalAlpha = clamp(pin.shimmer, 0, 1);
+                ctx.drawImage(this.sprites.pinShimmerSprite, px, py);
+                ctx.restore();
+              }
+            }
+
+            // Pin Edit Hover / Drag Selection Ring
+            if (this.state.editMode && (this.hoveredPin === pin || this.draggingPin === pin)) {
+              ctx.save();
+              ctx.strokeStyle = this.state.editDeleteTap ? "#ff5c5c" : "#ffe869";
+              ctx.setLineDash([3, 3]);
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(Math.round(pin.x), Math.round(pin.y), this.pinRadius + 4, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.restore();
+            }
+          }
+
+          // 3. Settled Bottom Pile
+          for (let i = 0; i < this.settledMarbles.length; i++) {
+            this.drawMarbleOrCube(this.settledMarbles[i], true);
+          }
+
+          // 4. Falling Active Marbles
+          for (let i = 0; i < this.activeMarbles.length; i++) {
+            this.drawMarbleOrCube(this.activeMarbles[i], false);
+          }
+
+          // 5. Top Animated Metallic Dispenser Tube (drawn in front of newly popped marble base)
+          const chute = this.sprites.dispenserSprite;
+          if (chute) {
+            const recoilOffsetY = -Math.round(this.dispenser.recoil * 6);
+            const cx = Math.round(this.dispenser.x - chute.width * 0.5);
+            ctx.drawImage(chute, cx, recoilOffsetY);
+          }
+
+          // 6. Retro Scanline Wipe Curtain on Board Clear / Auto-Reset
+          if (this.wipeProgress > 0) {
+            const wipeY = Math.floor((1.0 - this.wipeProgress) * this.height);
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, wipeY, this.width, this.height - wipeY);
+            ctx.fillStyle = "#7ef4e3";
+            ctx.fillRect(0, wipeY, this.width, 2);
+          }
+        }
+
+        /* =====================================================================
+           6. PURE-JS UI CONTROLS, DRAGGABLE SYSTEM 7 PANEL & SHORTCUTS
+           ===================================================================== */
+        findPinAt(x, y) {
+          const hitR = this.pinRadius + 5;
+          const hitRSq = hitR * hitR;
+          for (let i = this.pins.length - 1; i >= 0; i--) {
+            const p = this.pins[i];
+            const dx = x - p.x;
+            const dy = y - p.y;
+            if (dx * dx + dy * dy <= hitRSq) return p;
+          }
+          return null;
+        }
+
+        canPlaceEditedPin(x, y, ignorePin) {
+          const margin = this.pinRadius + 6;
+          if (x < margin || x > this.width - margin) return false;
+          if (y < Math.max(66, this.pinRadius + 24) || y > this.height - this.pinRadius - 18) return false;
+
+          const minGap = this.pinRadius * 2 + 4;
+          const minGapSq = minGap * minGap;
+          for (let i = 0; i < this.pins.length; i++) {
+            const p = this.pins[i];
+            if (p === ignorePin) continue;
+            const dx = x - p.x;
+            const dy = y - p.y;
+            if (dx * dx + dy * dy < minGapSq) return false;
+          }
+          return true;
+        }
+
+        clampPanelInsideViewport() {
+          const panel = document.getElementById("control-panel");
+          if (!panel || this.state.panelHidden || !this.panelHasCustomPos) return;
+
+          const rect = panel.getBoundingClientRect();
+          const maxLeft = Math.max(8, window.innerWidth - rect.width - 8);
+          const maxTop = Math.max(8, window.innerHeight - Math.min(rect.height, 64) - 8);
+
+          const clampedLeft = clamp(rect.left, 8, maxLeft);
+          const clampedTop = clamp(rect.top, 8, maxTop);
+          panel.style.right = "auto";
+          panel.style.left = Math.round(clampedLeft) + "px";
+          panel.style.top = Math.round(clampedTop) + "px";
+        }
+
+        setPanelHidden(hidden) {
+          this.state.panelHidden = Boolean(hidden);
+          const panel = document.getElementById("control-panel");
+          const reopenBtn = document.getElementById("reopen-panel-btn");
+
+          if (this.state.panelHidden) {
+            panel.classList.add("is-hidden");
+            reopenBtn.classList.add("is-visible");
+          } else {
+            panel.classList.remove("is-hidden");
+            reopenBtn.classList.remove("is-visible");
+            this.clampPanelInsideViewport();
+          }
+        }
+
+        setEditMode(active) {
+          this.state.editMode = Boolean(active);
+          this.draggingPin = null;
+          this.hoveredPin = null;
+          this.canvas.style.cursor = this.state.editMode ? "crosshair" : "default";
+
+          const badge = document.getElementById("edit-mode-badge");
+          if (this.state.editMode) {
+            badge.classList.add("is-active");
+            this.showToast("ピン編集モード: 空き地クリックで追加・ドラッグで移動・右/Shiftクリックで削除");
+          } else {
+            badge.classList.remove("is-active");
+          }
+          this.syncAllControlsUI();
+        }
+
+        toggleFullscreenSafely() {
+          try {
+            const doc = document;
+            const docEl = doc.documentElement;
+            const isFs = doc.fullscreenElement || doc.webkitFullscreenElement;
+            if (!isFs) {
+              const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
+              if (req) {
+                const res = req.call(docEl);
+                if (res && typeof res.catch === "function") {
+                  res.catch(() => {
+                    this.showToast("この環境では全画面表示が制限されています");
+                  });
+                }
+              } else {
+                this.showToast("お使いのブラウザは全画面APIに未対応です");
+              }
+            } else {
+              const exit = doc.exitFullscreen || doc.webkitExitFullscreen;
+              if (exit) exit.call(doc);
+            }
+          } catch (e) {
+            this.showToast("全画面切替を実行できませんでした");
+          }
+        }
+
+        bindControlsAndEvents() {
+          const self = this;
+          const panel = document.getElementById("control-panel");
+          const titlebar = document.getElementById("panel-titlebar");
+
+          const ensureAudioUnlocked = (playSampleClink) => {
+            const wasReady = self.synth.isReady();
+            self.synth.unlock();
+            self.updateAudioStatusUI();
+            if (!wasReady && self.synth.isReady() && playSampleClink) {
+              self.synth.playGlassClink(0.5, 220, true);
+            }
+          };
+
+          // Unlock AudioContext seamlessly on first pointer or key interaction anywhere
+          ["pointerdown", "touchstart", "keydown"].forEach((evtName) => {
+            window.addEventListener(evtName, () => {
+              ensureAudioUnlocked(false);
+            }, { passive: true });
+          });
+
+          window.addEventListener("resize", () => {
+            self.resizeCanvas(false);
+          });
+
+          // Draggable System 7 Pinstriped Title Bar (Mouse & Touch)
+          let panelDragging = false;
+          let dragStartX = 0;
+          let dragStartY = 0;
+          let panelStartLeft = 0;
+          let panelStartTop = 0;
+
+          titlebar.addEventListener("pointerdown", (e) => {
+            if (e.target.closest("button")) return;
+            panelDragging = true;
+            self.panelHasCustomPos = true;
+            const rect = panel.getBoundingClientRect();
+            panelStartLeft = rect.left;
+            panelStartTop = rect.top;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+
+            panel.style.right = "auto";
+            panel.style.left = Math.round(panelStartLeft) + "px";
+            panel.style.top = Math.round(panelStartTop) + "px";
+
+            try { titlebar.setPointerCapture(e.pointerId); } catch (err) {}
+          });
+
+          titlebar.addEventListener("pointermove", (e) => {
+            if (!panelDragging) return;
+            const rect = panel.getBoundingClientRect();
+            const maxLeft = Math.max(8, window.innerWidth - rect.width - 8);
+            const maxTop = Math.max(8, window.innerHeight - Math.min(rect.height, 64) - 8);
+            const nextLeft = clamp(panelStartLeft + (e.clientX - dragStartX), 8, maxLeft);
+            const nextTop = clamp(panelStartTop + (e.clientY - dragStartY), 8, maxTop);
+            panel.style.left = Math.round(nextLeft) + "px";
+            panel.style.top = Math.round(nextTop) + "px";
+          });
+
+          const stopPanelDrag = () => { panelDragging = false; };
+          titlebar.addEventListener("pointerup", stopPanelDrag);
+          titlebar.addEventListener("pointercancel", stopPanelDrag);
+
+          // Close Box & Reopen Floating Button
+          document.getElementById("close-panel-btn").addEventListener("click", (e) => {
+            e.stopPropagation();
+            e.currentTarget.blur();
+            self.setPanelHidden(true);
+          });
+
+          document.getElementById("reopen-panel-btn").addEventListener("click", (e) => {
+            e.currentTarget.blur();
+            ensureAudioUnlocked(false);
+            self.setPanelHidden(false);
+          });
+
+          // Track Slider Pointer Drag so keyboard shortcuts never interfere
+          document.querySelectorAll(".ad-slider").forEach((slider) => {
+            slider.addEventListener("pointerdown", () => { self.isDraggingSlider = true; });
+          });
+          window.addEventListener("pointerup", () => { self.isDraggingSlider = false; });
+          window.addEventListener("pointercancel", () => { self.isDraggingSlider = false; });
+
+          // Sound Toggle & Volume Slider
+          document.getElementById("sound-toggle-btn").addEventListener("click", (e) => {
+            e.currentTarget.blur();
+            self.synth.setEnabled(!self.synth.enabled);
+            if (self.synth.enabled) ensureAudioUnlocked(true);
+            self.syncAllControlsUI();
+          });
+
+          const volSlider = document.getElementById("volume-slider");
+          volSlider.addEventListener("input", () => {
+            const val = parseInt(volSlider.value, 10) || 0;
+            self.synth.setVolume(val / 100);
+            if (val > 0 && !self.synth.enabled) self.synth.setEnabled(true);
+            ensureAudioUnlocked(false);
+            self.syncAllControlsUI();
+            self.savePreferencesSafely();
+          });
+
+          // Pin Count Slider (15–80)
+          const pinCountSlider = document.getElementById("pin-count-slider");
+          pinCountSlider.addEventListener("input", () => {
+            const count = parseInt(pinCountSlider.value, 10) || 32;
+            self.adjustPinCountLive(count);
+            self.syncAllControlsUI();
+            self.savePreferencesSafely();
+          });
+
+          // Pin Size Slider (13–32px)
+          const pinSizeSlider = document.getElementById("pin-size-slider");
+          pinSizeSlider.addEventListener("input", () => {
+            self.state.pinRadiusSetting = parseInt(pinSizeSlider.value, 10) || 22;
+            self.computeGeometry();
+            self.wakeSettledMarblesNearPins();
+            self.syncAllControlsUI();
+            self.savePreferencesSafely();
+          });
+
+          // Drop Mode Buttons (Single vs Rush)
+          document.querySelectorAll(".dropmode-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              e.currentTarget.blur();
+              ensureAudioUnlocked(false);
+              self.state.dropMode = btn.getAttribute("data-dropmode") || "single";
+              self.dispenser.cooldown = 0.05;
+              self.syncAllControlsUI();
+              self.savePreferencesSafely();
+            });
+          });
+
+          // Spawn Speed Slider (1–10)
+          const speedSlider = document.getElementById("spawn-speed-slider");
+          speedSlider.addEventListener("input", () => {
+            self.state.spawnSpeed = parseInt(speedSlider.value, 10) || 5;
+            self.syncAllControlsUI();
+            self.savePreferencesSafely();
+          });
+
+          // Reset Interval Buttons (OFF / 30s / 60s / 120s)
+          document.querySelectorAll(".reset-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              e.currentTarget.blur();
+              ensureAudioUnlocked(false);
+              const sec = parseInt(btn.getAttribute("data-reset"), 10) || 0;
+              self.state.resetIntervalSec = sec;
+              self.resetRemaining = sec;
+              self.syncAllControlsUI();
+              self.savePreferencesSafely();
+            });
+          });
+
+          // Pin Edit Mode Controls
+          document.getElementById("edit-pins-btn").addEventListener("click", (e) => {
+            e.currentTarget.blur();
+            ensureAudioUnlocked(false);
+            self.setEditMode(!self.state.editMode);
+          });
+
+          document.getElementById("edit-done-btn").addEventListener("click", (e) => {
+            e.currentTarget.blur();
+            self.setEditMode(false);
+          });
+
+          document.getElementById("edit-delete-subtoggle").addEventListener("click", (e) => {
+            e.currentTarget.blur();
+            self.state.editDeleteTap = !self.state.editDeleteTap;
+            self.syncAllControlsUI();
+          });
+
+          document.getElementById("rearrange-pins-btn").addEventListener("click", (e) => {
+            e.currentTarget.blur();
+            ensureAudioUnlocked(false);
+            self.generatePins();
+            self.synth.playPinEditChirp(0.5, false);
+            self.showToast("ガラスピンを再配置しました");
+            self.syncAllControlsUI();
+          });
+
+          // Action Buttons
+          document.getElementById("drop-marble-btn").addEventListener("click", (e) => {
+            e.currentTarget.blur();
+            ensureAudioUnlocked(false);
+            if (self.state.editMode) self.setEditMode(false);
+            self.requestManualDrop("marble");
+          });
+
+          document.getElementById("drop-smiley-btn").addEventListener("click", (e) => {
+            e.currentTarget.blur();
+            ensureAudioUnlocked(false);
+            if (self.state.editMode) self.setEditMode(false);
+            self.requestManualDrop("smiley");
+          });
+
+          document.getElementById("drop-cube-btn").addEventListener("click", (e) => {
+            e.currentTarget.blur();
+            ensureAudioUnlocked(false);
+            if (self.state.editMode) self.setEditMode(false);
+            self.requestManualDrop("cube");
+          });
+
+          document.getElementById("clear-marbles-btn").addEventListener("click", (e) => {
+            e.currentTarget.blur();
+            ensureAudioUnlocked(false);
+            self.clearMarbles(false);
+            self.synth.playPinEditChirp(0.5, true);
+          });
+
+          document.getElementById("fullscreen-btn").addEventListener("click", (e) => {
+            e.currentTarget.blur();
+            ensureAudioUnlocked(false);
+            self.toggleFullscreenSafely();
+          });
+
+          // CRT Scanlines Toggle
+          const crtCheck = document.getElementById("crt-checkbox");
+          crtCheck.addEventListener("change", () => {
+            self.state.crtEnabled = crtCheck.checked;
+            crtCheck.blur();
+            self.syncAllControlsUI();
+            self.savePreferencesSafely();
+          });
+
+          // Canvas Pointer Interactions (Click-to-drop OR Pin Edit Mode)
+          this.canvas.addEventListener("contextmenu", (e) => {
+            if (self.state.editMode) e.preventDefault();
+          });
+
+          this.canvas.addEventListener("pointerdown", (e) => {
+            ensureAudioUnlocked(false);
+            const x = e.clientX;
+            const y = e.clientY;
+
+            if (self.state.editMode) {
+              const hitPin = self.findPinAt(x, y);
+              const wantDelete = e.button === 2 || e.shiftKey || self.state.editDeleteTap;
+
+              if (wantDelete) {
+                if (hitPin) {
+                  self.pins = self.pins.filter((p) => p !== hitPin);
+                  self.hoveredPin = null;
+                  self.state.pinCount = clamp(self.pins.length, 15, 80);
+                  self.synth.playPinEditChirp(x / Math.max(1, self.width), true);
+                  self.syncAllControlsUI();
+                }
+                return;
+              }
+
+              if (hitPin) {
+                self.draggingPin = hitPin;
+                self.dragOffsetX = x - hitPin.x;
+                self.dragOffsetY = y - hitPin.y;
+                try { self.canvas.setPointerCapture(e.pointerId); } catch (err) {}
+              } else if (self.canPlaceEditedPin(x, y, null)) {
+                self.pins.push({
+                  x: Math.round(x),
+                  y: Math.round(y),
+                  variant: self.pins.length % 4,
+                  shimmer: 0.85
+                });
+                self.state.pinCount = clamp(self.pins.length, 15, 80);
+                self.wakeSettledMarblesNearPins();
+                self.synth.playPinEditChirp(x / Math.max(1, self.width), false);
+                self.syncAllControlsUI();
+              } else {
+                self.showToast("他のピンや画面端に近すぎるため配置できません");
+              }
+              return;
+            }
+
+            // Normal mode: left click / tap commands top chute to slide to X and drop!
+            if (e.button === 0) {
+              self.requestManualDrop("random", x);
+            }
+          });
+
+          this.canvas.addEventListener("pointermove", (e) => {
+            if (!self.state.editMode) return;
+            const x = e.clientX;
+            const y = e.clientY;
+
+            if (self.draggingPin) {
+              const nx = x - self.dragOffsetX;
+              const ny = y - self.dragOffsetY;
+              if (self.canPlaceEditedPin(nx, ny, self.draggingPin)) {
+                self.draggingPin.x = Math.round(nx);
+                self.draggingPin.y = Math.round(ny);
+                self.wakeSettledMarblesNearPins();
+              }
+            } else {
+              self.hoveredPin = self.findPinAt(x, y);
+              self.canvas.style.cursor = self.hoveredPin
+                ? (self.state.editDeleteTap ? "not-allowed" : "grab")
+                : "crosshair";
+            }
+          });
+
+          const endPinDrag = () => { self.draggingPin = null; };
+          this.canvas.addEventListener("pointerup", endPinDrag);
+          this.canvas.addEventListener("pointercancel", endPinDrag);
+
+          // Keyboard Shortcuts
+          window.addEventListener("keydown", (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            if (self.isDraggingSlider) return;
+
+            const activeTag = document.activeElement ? document.activeElement.tagName : "";
+            const onRangeInput = activeTag === "INPUT" && document.activeElement.type === "range";
+            if (onRangeInput && (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowDown")) {
+              return;
+            }
+
+            ensureAudioUnlocked(false);
+
+            if (e.code === "Space" || e.key === " ") {
+              e.preventDefault();
+              if (!self.state.editMode) self.requestManualDrop("marble");
+            } else if (e.key === "s" || e.key === "S") {
+              if (!self.state.editMode) self.requestManualDrop("smiley");
+            } else if (e.key === "c" || e.key === "C") {
+              if (!self.state.editMode) self.requestManualDrop("cube");
+            } else if (e.key === "e" || e.key === "E" || e.key === "CapsLock") {
+              self.setEditMode(!self.state.editMode);
+            } else if (e.key === "r" || e.key === "R") {
+              self.clearMarbles(false);
+              self.synth.playPinEditChirp(0.5, true);
+            } else if (e.key === "h" || e.key === "H") {
+              self.setPanelHidden(!self.state.panelHidden);
+            } else if (e.key === "f" || e.key === "F") {
+              self.toggleFullscreenSafely();
+            } else if (e.key === "m" || e.key === "M") {
+              self.synth.setEnabled(!self.synth.enabled);
+              self.syncAllControlsUI();
+            }
+          });
+        }
+
+        updateStatsBar() {
+          const totalMarbles = this.settledMarbles.length + this.activeMarbles.length;
+          const el = document.getElementById("stats-counter");
+          if (el) {
+            el.textContent = "MARBLES: " + totalMarbles + " | PINS: " + this.pins.length;
+          }
+        }
+
+        updateResetCountdownUI() {
+          const el = document.getElementById("reset-countdown-label");
+          if (!el) return;
+          if (this.state.resetIntervalSec <= 0) {
+            el.textContent = "RESET: OFF";
+          } else {
+            el.textContent = "RESET: " + Math.max(1, Math.ceil(this.resetRemaining)) + "s";
+          }
+        }
+
+        updateAudioStatusUI() {
+          const pill = document.getElementById("audio-status-pill");
+          if (!pill) return;
+          if (!this.synth.enabled) {
+            pill.textContent = "MUTED";
+            pill.classList.remove("is-ready");
+          } else if (this.synth.isReady()) {
+            pill.textContent = "STEREO READY";
+            pill.classList.add("is-ready");
+          } else {
+            pill.textContent = "画面操作で音声起動";
+            pill.classList.remove("is-ready");
+          }
+        }
+
+        syncAllControlsUI() {
+          this.updateStatsBar();
+          this.updateResetCountdownUI();
+          this.updateAudioStatusUI();
+
+          // Sound Toggle & Volume
+          const soundBtn = document.getElementById("sound-toggle-btn");
+          soundBtn.textContent = this.synth.enabled ? "🔊 サウンド ON (M)" : "🔇 サウンド OFF (M)";
+          soundBtn.classList.toggle("is-active", this.synth.enabled);
+
+          const volPct = Math.round(this.synth.volume * 100);
+          document.getElementById("volume-slider").value = String(volPct);
+          document.getElementById("volume-value").textContent = volPct + "%";
+
+          // Pin Count & Pin Size
+          document.getElementById("pin-count-slider").value = String(this.state.pinCount);
+          document.getElementById("pin-count-value").textContent = this.pins.length + "個";
+
+          const sz = this.state.pinRadiusSetting;
+          const sizeName = sz <= 17 ? "Small" : (sz <= 25 ? "Medium" : "Large");
+          document.getElementById("pin-size-slider").value = String(sz);
+          document.getElementById("pin-size-value").textContent = sizeName + " (" + sz + "px)";
+
+          // Drop Mode & Speed
+          document.querySelectorAll(".dropmode-btn").forEach((btn) => {
+            btn.classList.toggle("is-active", btn.getAttribute("data-dropmode") === this.state.dropMode);
+          });
+          document.getElementById("spawn-speed-slider").value = String(this.state.spawnSpeed);
+          document.getElementById("spawn-speed-value").textContent = "Lv." + this.state.spawnSpeed;
+
+          // Reset Interval Buttons
+          document.querySelectorAll(".reset-btn").forEach((btn) => {
+            const val = parseInt(btn.getAttribute("data-reset"), 10) || 0;
+            btn.classList.toggle("is-active", val === this.state.resetIntervalSec);
+          });
+
+          // Pin Edit Buttons
+          const editBtn = document.getElementById("edit-pins-btn");
+          editBtn.classList.toggle("is-amber", this.state.editMode);
+          editBtn.textContent = this.state.editMode ? "🔧 ピン編集中 (E)" : "🔧 ピン編集モード (E)";
+
+          const delSubBtn = document.getElementById("edit-delete-subtoggle");
+          delSubBtn.classList.toggle("is-amber", this.state.editDeleteTap);
+          delSubBtn.textContent = this.state.editDeleteTap ? "削除タップ: ON" : "削除タップ: OFF";
+
+          // CRT Scanlines
+          document.getElementById("crt-checkbox").checked = this.state.crtEnabled;
+          document.getElementById("crt-overlay").classList.toggle("is-active", this.state.crtEnabled);
+        }
+
+        showToast(msg) {
+          const toast = document.getElementById("retro-toast");
+          if (!toast) return;
+          toast.textContent = msg;
+          toast.classList.add("is-visible");
+          clearTimeout(this._toastTimer);
+          this._toastTimer = setTimeout(() => {
+            toast.classList.remove("is-visible");
+          }, 2300);
+        }
+
+        start() {
+          const loop = (now) => {
+            const rawDt = (now - this.lastTimestamp) / 1000;
+            this.lastTimestamp = now;
+            const dt = clamp(rawDt, 0.001, 0.033);
+
+            this.update(dt);
+            this.render();
+            window.requestAnimationFrame(loop);
+          };
+          window.requestAnimationFrame(loop);
+        }
+      }
+
+      window.addEventListener("load", function () {
+        const app = new AfterDarkMarbles();
+        app.start();
+      });
+    })();
+  </script>
+</body>
+</html>

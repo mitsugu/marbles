@@ -1,0 +1,2575 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>After Dark 2.0 — Marbles (1992 Retro Screensaver Recreation)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* =========================================================================
+       Retro After Dark 2.0 (Macintosh System 7 / Windows 3.1) UI Styling
+       ========================================================================= */
+    :root {
+      --ad-gray: #c6c6c6;
+      --ad-gray-light: #dfdfdf;
+      --ad-gray-dark: #7b7b7b;
+      --ad-black: #000000;
+      --ad-white: #ffffff;
+      --ad-accent: #000080;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #000000;
+      overflow: hidden;
+      font-family: "MS PGothic", "Osaka", "Chicago", "Geneva", "Tahoma", monospace, sans-serif;
+    }
+
+    /* Pitch-black full-viewport retro canvas */
+    #marblesCanvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background-color: #000000;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      touch-action: none;
+    }
+
+    body.cursor-hidden,
+    body.cursor-hidden #marblesCanvas {
+      cursor: none !important;
+    }
+
+    /* Classic 3D Beveled System 7 / Win 3.1 Window */
+    .ad-window {
+      background-color: var(--ad-gray);
+      border-top: 2px solid var(--ad-white);
+      border-left: 2px solid var(--ad-white);
+      border-right: 2px solid #404040;
+      border-bottom: 2px solid #404040;
+      outline: 1px solid #000000;
+      box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.85);
+      border-radius: 3px;
+      color: #000000;
+      transition: opacity 0.28s ease;
+    }
+
+    /* Classic Mac System 7 Pinstripe Title Bar */
+    .ad-titlebar {
+      background: repeating-linear-gradient(
+        to bottom,
+        #ffffff 0px,
+        #ffffff 1px,
+        #a8a8a8 1px,
+        #a8a8a8 2px
+      );
+      border-bottom: 1px solid #404040;
+      padding: 3px 6px;
+      cursor: grab;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .ad-titlebar:active {
+      cursor: grabbing;
+    }
+
+    .ad-title-badge {
+      background-color: var(--ad-gray);
+      padding: 0 7px;
+      font-weight: bold;
+      font-size: 12px;
+      letter-spacing: 0.3px;
+      color: #000000;
+      white-space: nowrap;
+    }
+
+    /* Classic Square Close / Collapse Box */
+    .ad-title-box {
+      width: 13px;
+      height: 13px;
+      background: var(--ad-gray);
+      border: 1px solid #202020;
+      box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #808080;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      font-size: 9px;
+      line-height: 1;
+      font-weight: bold;
+    }
+    .ad-title-box:active {
+      background: #000000;
+      color: #ffffff;
+    }
+
+    /* Sunken Inset Group Panel */
+    .ad-inset {
+      background-color: #bcbcbc;
+      border-top: 1px solid #666666;
+      border-left: 1px solid #666666;
+      border-right: 1px solid #ffffff;
+      border-bottom: 1px solid #ffffff;
+      border-radius: 2px;
+    }
+
+    /* Retro Beveled Push Button */
+    .ad-btn {
+      background-color: var(--ad-gray);
+      border-top: 2px solid #ffffff;
+      border-left: 2px solid #ffffff;
+      border-right: 2px solid #4a4a4a;
+      border-bottom: 2px solid #4a4a4a;
+      outline: 1px solid #181818;
+      border-radius: 2px;
+      color: #000000;
+      font-size: 11px;
+      line-height: 1.25;
+      padding: 4px 7px;
+      cursor: pointer;
+      text-align: center;
+      font-weight: 600;
+    }
+    .ad-btn:hover {
+      background-color: #d4d4d4;
+    }
+    .ad-btn:active,
+    .ad-btn.active {
+      background-color: #9e9e9e;
+      border-top: 2px solid #4a4a4a;
+      border-left: 2px solid #4a4a4a;
+      border-right: 2px solid #efefef;
+      border-bottom: 2px solid #efefef;
+      padding-top: 5px;
+      padding-bottom: 3px;
+    }
+    .ad-btn.active-blue {
+      background-color: #102a6b;
+      color: #ffffff;
+      border-top: 2px solid #061233;
+      border-left: 2px solid #061233;
+      border-right: 2px solid #7ea1ff;
+      border-bottom: 2px solid #7ea1ff;
+    }
+    .ad-btn.active-amber {
+      background-color: #6b3c00;
+      color: #ffe875;
+      border-top: 2px solid #2e1900;
+      border-left: 2px solid #2e1900;
+      border-right: 2px solid #ffc966;
+      border-bottom: 2px solid #ffc966;
+    }
+
+    /* Retro Range Slider */
+    input[type="range"].ad-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 12px;
+      background: repeating-linear-gradient(
+        90deg,
+        #969696 0px,
+        #969696 2px,
+        #bcbcbc 2px,
+        #bcbcbc 4px
+      );
+      border-top: 1px solid #444;
+      border-left: 1px solid #444;
+      border-right: 1px solid #fff;
+      border-bottom: 1px solid #fff;
+      border-radius: 2px;
+      outline: none;
+    }
+    input[type="range"].ad-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 18px;
+      background: var(--ad-gray);
+      border-top: 2px solid #fff;
+      border-left: 2px solid #fff;
+      border-right: 2px solid #444;
+      border-bottom: 2px solid #444;
+      outline: 1px solid #000;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+    input[type="range"].ad-slider::-moz-range-thumb {
+      width: 12px;
+      height: 18px;
+      background: var(--ad-gray);
+      border-top: 2px solid #fff;
+      border-left: 2px solid #fff;
+      border-right: 2px solid #444;
+      border-bottom: 2px solid #444;
+      outline: 1px solid #000;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    /* Digital Counter Box */
+    .ad-lcd {
+      background-color: #081214;
+      color: #6ef7c8;
+      border-top: 1px solid #303030;
+      border-left: 1px solid #303030;
+      border-right: 1px solid #ffffff;
+      border-bottom: 1px solid #ffffff;
+      font-family: "Courier New", monospace;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      border-radius: 2px;
+    }
+
+    /* Auto-hide helper when idle in screensaver mode */
+    .ui-idle-hidden {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    /* Custom thin scrollbar for compact viewports */
+    .ad-scroll::-webkit-scrollbar {
+      width: 10px;
+    }
+    .ad-scroll::-webkit-scrollbar-track {
+      background: #a8a8a8;
+    }
+    .ad-scroll::-webkit-scrollbar-thumb {
+      background: #c6c6c6;
+      border: 1px solid #333;
+    }
+  </style>
+</head>
+<body class="relative select-none">
+
+  <!-- Full-Viewport Pitch-Black Retro HTML5 Canvas -->
+  <canvas id="marblesCanvas"></canvas>
+
+  <!-- Unobtrusive Sound Unlock Prompt Badge (disappears as soon as Web Audio unlocks) -->
+  <button
+    id="audioUnlockBadge"
+    type="button"
+    class="ad-window fixed top-3 left-3 z-30 px-3 py-1.5 flex items-center gap-2 text-xs font-bold cursor-pointer hover:brightness-105"
+    title="クリックでWeb Audioレトロ効果音を有効化"
+  >
+    <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse border border-black"></span>
+    <span>🔊 画面クリックでレトロ音声ON <span class="font-normal text-[11px] text-neutral-700">(Click for Retro Sound)</span></span>
+  </button>
+
+  <!-- Edit Pins Mode Top Banner (Caps-Lock Editor Homage) -->
+  <div
+    id="editModeBanner"
+    class="hidden fixed top-3 left-1/2 -translate-x-1/2 z-30 ad-window px-3.5 py-2 text-xs max-w-[94vw]"
+  >
+    <div class="flex flex-wrap items-center justify-center gap-2">
+      <span class="font-bold text-[#6b2f00]">🔧 ピン編集モード (Edit Pins / Caps-Lock Mode)</span>
+      <span class="text-[11px] text-neutral-800 hidden sm:inline">
+        ドラッグ：移動 ／ 空き地クリック：追加 ／ 右クリック・ダブルクリック：削除
+      </span>
+      <div class="flex items-center gap-1 ml-1">
+        <button id="editSubMoveBtn" type="button" class="ad-btn active-blue px-2 py-0.5 text-[11px]">移動・追加</button>
+        <button id="editSubDeleteBtn" type="button" class="ad-btn px-2 py-0.5 text-[11px]">クリック削除</button>
+        <button id="editDoneBtn" type="button" class="ad-btn px-2 py-0.5 text-[11px]">完了 (Done)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Minimized Corner Dock Button (shown when Control Panel is collapsed) -->
+  <button
+    id="minimizedDockBtn"
+    type="button"
+    class="hidden fixed bottom-3 right-3 z-30 ad-window px-3 py-1.5 text-xs font-bold items-center gap-2 cursor-pointer"
+  >
+    <span>🔮 After Dark: Marbles</span>
+    <span id="miniCountLabel" class="ad-lcd px-1.5 py-0.5 text-[11px]">0/100</span>
+    <span class="text-[11px] underline">設定を開く</span>
+  </button>
+
+  <!-- Retro After Dark 2.0 Control Panel -->
+  <aside
+    id="controlPanel"
+    class="ad-window fixed top-3 right-3 z-40 w-[312px] sm:w-[334px] max-w-[calc(100vw-24px)] max-h-[calc(100vh-24px)] flex flex-col"
+    aria-label="After Dark 2.0 Marbles Control Panel"
+  >
+    <!-- Draggable Macintosh System 7 Title Bar -->
+    <div id="panelTitleBar" class="ad-titlebar">
+      <button id="collapsePanelBtn" type="button" class="ad-title-box" title="パネルを最小化 (Minimize)">–</button>
+      <div class="ad-title-badge">After Dark 2.0 — Marbles</div>
+      <button id="fullscreenQuickBtn" type="button" class="ad-title-box" title="フルスクリーン切替 (Fullscreen)">⤢</button>
+    </div>
+
+    <!-- Scrollable Control Body -->
+    <div class="p-2.5 space-y-2 overflow-y-auto ad-scroll text-[11px]">
+
+      <!-- Module Header / Nostalgic After Dark Lore -->
+      <div class="ad-inset p-2 bg-[#141923] text-white flex items-center gap-2.5">
+        <!-- Mini Inline Pixel Icon of Glass Pin + Smiley + Red Marble -->
+        <svg width="38" height="38" viewBox="0 0 19 19" class="flex-shrink-0 rounded border border-neutral-600 bg-black" style="image-rendering: pixelated;">
+          <!-- Starry night dots -->
+          <rect x="2" y="2" width="1" height="1" fill="#7dd3fc"/>
+          <rect x="15" y="3" width="1" height="1" fill="#fde047"/>
+          <rect x="3" y="15" width="1" height="1" fill="#a7f3d0"/>
+          <!-- Glass Pin -->
+          <circle cx="9" cy="11" r="5" fill="#2b5d66" stroke="#8be3d8" stroke-width="1"/>
+          <path d="M7 9 C8 11, 10 11, 11 13" stroke="#baf7ef" stroke-width="1.2" fill="none"/>
+          <rect x="6" y="8" width="2" height="2" fill="#ffffff"/>
+          <!-- Red Marble -->
+          <circle cx="5" cy="5" r="2.6" fill="#e11d48"/>
+          <rect x="4" y="4" width="1" height="1" fill="#ffffff"/>
+          <!-- Smiley Marble -->
+          <circle cx="14" cy="14" r="3" fill="#facc15"/>
+          <rect x="13" y="13" width="1" height="1" fill="#000"/>
+          <rect x="15" y="13" width="1" height="1" fill="#000"/>
+          <rect x="13" y="15" width="3" height="1" fill="#000"/>
+        </svg>
+        <div class="leading-tight">
+          <div class="font-bold text-xs text-[#8be3d8] tracking-wide">MARBLES <span class="text-[10px] font-normal text-neutral-300">(Berkeley Systems '92)</span></div>
+          <p class="text-[10px] text-neutral-300 mt-0.5 italic">
+            "Some marbles are more sensitive than others."
+          </p>
+        </div>
+      </div>
+
+      <!-- Live Stacked Counter + Audio Indicator -->
+      <div class="ad-inset p-1.5 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5">
+          <span class="font-bold">積み上がり (Stacked):</span>
+          <span id="stackedCountDisplay" class="ad-lcd px-2 py-0.5 text-xs">0 / 100</span>
+        </div>
+        <span id="statusIndicator" class="text-[10px] font-bold text-[#003366]">1-by-1 落下中</span>
+      </div>
+
+      <!-- Sound Controls -->
+      <div class="ad-inset p-2 space-y-1.5">
+        <div class="flex items-center justify-between gap-2">
+          <span class="font-bold">サウンド (Sound)</span>
+          <button id="soundToggleBtn" type="button" class="ad-btn active-blue px-2.5 py-0.5 min-w-[84px]">
+            🔊 ON
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] w-14 flex-shrink-0">音量 (Vol)</span>
+          <input id="volumeSlider" type="range" min="0" max="100" value="75" class="ad-slider" />
+          <span id="volumeLabel" class="w-8 text-right font-mono text-[10px]">75%</span>
+        </div>
+      </div>
+
+      <!-- # Pins & Pin Size -->
+      <div class="ad-inset p-2 space-y-2">
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-bold">ピンの数 (# Pins)</span>
+            <span id="pinCountLabel" class="text-[10px] text-neutral-700">28個 (Many)</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1">
+            <button type="button" data-pincount="14" class="pin-count-btn ad-btn">少なめ (14)</button>
+            <button type="button" data-pincount="22" class="pin-count-btn ad-btn">ふつう (22)</button>
+            <button type="button" data-pincount="28" class="pin-count-btn ad-btn active-blue">多め (28)</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-bold">ピンのサイズ (Pin Size)</span>
+            <span id="pinSizeLabel" class="text-[10px] text-neutral-700">Medium</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1">
+            <button type="button" data-pinsize="small" class="pin-size-btn ad-btn">小 (Small)</button>
+            <button type="button" data-pinsize="medium" class="pin-size-btn ad-btn active-blue">中 (Med)</button>
+            <button type="button" data-pinsize="large" class="pin-size-btn ad-btn">大 (Large)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Redraw Every & Clear / Shuffle Actions -->
+      <div class="ad-inset p-2 space-y-1.5">
+        <div class="flex justify-between items-center">
+          <span class="font-bold">リセット間隔 (Redraw Every)</span>
+        </div>
+        <div class="grid grid-cols-4 gap-1">
+          <button type="button" data-redraw="50" class="redraw-btn ad-btn">50個</button>
+          <button type="button" data-redraw="100" class="redraw-btn ad-btn active-blue">100個</button>
+          <button type="button" data-redraw="200" class="redraw-btn ad-btn">200個</button>
+          <button type="button" data-redraw="0" class="redraw-btn ad-btn">なし(∞)</button>
+        </div>
+        <div class="grid grid-cols-2 gap-1.5 pt-1">
+          <button id="clearPileBtn" type="button" class="ad-btn">🧹 今すぐクリア (Clear)</button>
+          <button id="shufflePinsBtn" type="button" class="ad-btn">🔀 ピン再配置 (Shuffle)</button>
+        </div>
+      </div>
+
+      <!-- Drop Mode & Easter Egg Spawner -->
+      <div class="ad-inset p-2 space-y-2">
+        <div>
+          <span class="font-bold block mb-1">落下モード (Drop Mode)</span>
+          <div class="grid grid-cols-2 gap-1">
+            <button type="button" data-dropmode="single" class="drop-mode-btn ad-btn active-blue">オリジナル (1個ずつ)</button>
+            <button type="button" data-dropmode="multi" class="drop-mode-btn ad-btn">連続ラッシュ (Multi)</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-bold">画面クリック時の玉 (Click Drop)</span>
+          </div>
+          <div class="grid grid-cols-4 gap-1">
+            <button type="button" data-clicktype="random" class="click-type-btn ad-btn active-blue">ランダム</button>
+            <button type="button" data-clicktype="standard" class="click-type-btn ad-btn">🔮 ガラス</button>
+            <button type="button" data-clicktype="smiley" class="click-type-btn ad-btn">🙂 スマイル</button>
+            <button type="button" data-clicktype="cube" class="click-type-btn ad-btn">🟦 キューブ</button>
+          </div>
+          <div class="grid grid-cols-2 gap-1.5 mt-1.5">
+            <button id="spawnSmileyNowBtn" type="button" class="ad-btn" title="Sensitive Marble: ぶつかると「あっ！」と声が出ます">
+              🙂 スマイル玉を落とす
+            </button>
+            <button id="spawnCubeNowBtn" type="button" class="ad-btn" title="Patterned Cube: 回転しながらカタカタ音を立てます">
+              🟦 キューブを落とす
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Pins & Screensaver Controls -->
+      <div class="grid grid-cols-2 gap-1.5">
+        <button id="editPinsToggleBtn" type="button" class="ad-btn py-1.5">
+          🔧 ピン編集 (Edit Pins)
+        </button>
+        <button id="fullscreenBtn" type="button" class="ad-btn py-1.5">
+          🖥️ フルスクリーン
+        </button>
+      </div>
+
+      <!-- Subtle Keyboard / Help Footer -->
+      <div class="text-[10px] text-neutral-700 leading-snug px-0.5 pt-0.5 flex items-center justify-between">
+        <span>画面クリックで好きな位置から落下</span>
+        <button id="hideUiNowBtn" type="button" class="underline hover:text-black">パネルを隠す [H]</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Retro Toast Message Box (replaces any alert/confirm) -->
+  <div
+    id="retroToast"
+    class="pointer-events-none opacity-0 transition-opacity duration-300 fixed bottom-4 left-1/2 -translate-x-1/2 z-50 ad-window px-3.5 py-1.5 text-xs font-bold"
+  ></div>
+
+  <script>
+    /**
+     * =========================================================================
+     * After Dark 2.0 "Marbles" (1992 Berkeley Systems) — Faithful Recreation
+     * Single-File HTML5 Canvas + Procedural Stereo Web Audio API
+     * =========================================================================
+     */
+
+    // =========================================================================
+    // 1. RETRO 256-COLOR PIXEL-ART SPRITE FACTORY (Offscreen Pre-rendering)
+    // =========================================================================
+    const BAYER_4X4 = [
+      [ 0,  8,  2, 10],
+      [12,  4, 14,  6],
+      [ 3, 11,  1,  9],
+      [15,  7, 13,  5]
+    ];
+
+    /**
+     * Quantizes an RGB channel (0..255) with 4x4 ordered Bayer dithering
+     * to recreate crisp Macintosh System 7 / SVGA 256-color indexed shading.
+     */
+    function ditherChannel(val, gx, gy, step = 28) {
+      const bayer = (BAYER_4X4[gy & 3][gx & 3] / 16 - 0.5) * (step * 0.85);
+      const quantized = Math.round((val + bayer) / step) * step;
+      return Math.max(0, Math.min(255, quantized));
+    }
+
+    /**
+     * Helper to write a square retro texel block (texelSize x texelSize) into ImageData.
+     */
+    function setTexel(data, canvasSize, gx, gy, texelSize, r, g, b, a = 255) {
+      const startX = gx * texelSize;
+      const startY = gy * texelSize;
+      for (let py = 0; py < texelSize; py++) {
+        const y = startY + py;
+        if (y < 0 || y >= canvasSize) continue;
+        for (let px = 0; px < texelSize; px++) {
+          const x = startX + px;
+          if (x < 0 || x >= canvasSize) continue;
+          const idx = (y * canvasSize + x) * 4;
+          data[idx]     = r;
+          data[idx + 1] = g;
+          data[idx + 2] = b;
+          data[idx + 3] = a;
+        }
+      }
+    }
+
+    class RetroSpriteFactory {
+      constructor() {
+        // Retro pixel grain size (2 screen CSS pixels = 1 classic 640x480 CRT pixel)
+        this.texelSize = 2;
+        this.pinSprites = [];
+        this.standardFrames = {};
+        this.smileyHappyFrames = [];
+        this.smileySurprisedFrames = [];
+        this.cubeFrames = [];
+      }
+
+      /**
+       * Rebuild all offscreen sprites whenever pin or marble pixel dimensions change.
+       */
+      buildAll(pinRadiusPx, marbleRadiusPx) {
+        // 4 subtle internal cat's-eye swirl variations for static glass pins
+        this.pinSprites = [0, 1, 2, 3].map(variant =>
+          this.createGlassPinSprite(pinRadiusPx, variant)
+        );
+
+        // 5 Iconic Glossy Falling Marble Palettes (8 spin frames each)
+        const palettes = {
+          red:     { rim: [52, 6, 12],   dark: [148, 12, 26], mid: [232, 28, 42], bright: [255, 105, 98] },
+          magenta: { rim: [54, 8, 48],   dark: [146, 16, 118], mid: [232, 42, 186], bright: [255, 138, 226] },
+          green:   { rim: [6, 46, 20],   dark: [14, 118, 48], mid: [28, 202, 82], bright: [120, 248, 152] },
+          blue:    { rim: [8, 20, 68],   dark: [18, 56, 168], mid: [44, 112, 246], bright: [126, 188, 255] },
+          silver:  { rim: [36, 40, 48],  dark: [96, 104, 118], mid: [176, 186, 202], bright: [236, 242, 250] }
+        };
+
+        this.standardFrames = {};
+        for (const [colorKey, pal] of Object.entries(palettes)) {
+          this.standardFrames[colorKey] = [];
+          for (let f = 0; f < 8; f++) {
+            const phase = (f / 8) * Math.PI * 2;
+            this.standardFrames[colorKey].push(
+              this.createGlossyMarbleSprite(marbleRadiusPx, pal, phase)
+            );
+          }
+        }
+
+        // Easter Egg #1: Yellow Smiley Face Ball ("Sensitive Marble") — 12 spin frames
+        this.smileyHappyFrames = [];
+        this.smileySurprisedFrames = [];
+        for (let f = 0; f < 12; f++) {
+          const angle = (f / 12) * Math.PI * 2;
+          this.smileyHappyFrames.push(this.createSmileySprite(marbleRadiusPx, angle, false));
+          this.smileySurprisedFrames.push(this.createSmileySprite(marbleRadiusPx, angle, true));
+        }
+
+        // Easter Egg #2: Retro Multi-Colored Patterned Cube — 16 rotation frames
+        this.cubeFrames = [];
+        for (let f = 0; f < 16; f++) {
+          const angle = (f / 16) * Math.PI * 2;
+          this.cubeFrames.push(this.createCubeSprite(marbleRadiusPx, angle));
+        }
+      }
+
+      /**
+       * Pre-renders the iconic After Dark 2.0 Cat's-Eye Clear/Iridescent Glass Pin Sphere:
+       * Dark outer glass rim, smoky seafoam/cyan/silver internal ribbon swirls,
+       * Bayer pixel dithering, bright white upper-left specular highlight,
+       * and faint lower-right secondary caustic crescent.
+       */
+      createGlassPinSprite(radiusPx, variant = 0) {
+        const ts = this.texelSize;
+        const gridR = Math.max(7, Math.round(radiusPx / ts));
+        const gridDim = gridR * 2 + 2;
+        const canvasSize = gridDim * ts;
+
+        const off = document.createElement('canvas');
+        off.width = canvasSize;
+        off.height = canvasSize;
+        const octx = off.getContext('2d');
+        const img = octx.createImageData(canvasSize, canvasSize);
+        const data = img.data;
+
+        const center = (gridDim - 1) / 2;
+        const swirlAngle = variant * 0.68 - 0.55;
+        const cosA = Math.cos(swirlAngle);
+        const sinA = Math.sin(swirlAngle);
+
+        for (let gy = 0; gy < gridDim; gy++) {
+          for (let gx = 0; gx < gridDim; gx++) {
+            const nx = (gx - center) / gridR;
+            const ny = (gy - center) / gridR;
+            const distSq = nx * nx + ny * ny;
+
+            if (distSq > 1.0) continue; // Outside sphere: crisp 1-bit alpha mask
+
+            const dist = Math.sqrt(distSq);
+            const nz = Math.sqrt(Math.max(0, 1.0 - distSq));
+
+            // 1. Dark glass outer rim (1-texel crisp outline)
+            if (dist > 0.89) {
+              // Subtle rim glint on bottom-right edge
+              const rimBright = (nx * 0.5 + ny * 0.5 > 0.35) ? 1.35 : 1.0;
+              setTexel(
+                data, canvasSize, gx, gy, ts,
+                Math.round(22 * rimBright),
+                Math.round(48 * rimBright),
+                Math.round(54 * rimBright),
+                255
+              );
+              continue;
+            }
+
+            // 2. Base translucent dark smoky-teal glass body
+            const lightDot = Math.max(0, nx * -0.48 + ny * -0.52 + nz * 0.70);
+            let r = 10 + lightDot * 38;
+            let g = 24 + lightDot * 66;
+            let b = 30 + lightDot * 74;
+
+            // 3. Cat's-Eye internal seafoam-green / cyan / silver ribbons
+            const rx = nx * cosA - ny * sinA;
+            const ry = nx * sinA + ny * cosA;
+            const sCurve1 = Math.sin((rx * 2.9 + Math.sin(ry * 2.7) * 0.75) * Math.PI * 0.55);
+            const ribbon1 = Math.max(0, 1.0 - Math.abs(rx + Math.sin(ry * 2.6) * 0.34) * 3.1) * nz;
+            const ribbon2 = Math.max(0, 1.0 - Math.abs(ry * 0.85 - Math.sin(rx * 2.8) * 0.30) * 3.6) * nz * 0.72;
+
+            // Seafoam-cyan ribbon core
+            if (ribbon1 > 0.05) {
+              r += ribbon1 * 92;
+              g += ribbon1 * 188;
+              b += ribbon1 * 176;
+            }
+            // Iridescent silver-blue secondary ribbon
+            if (ribbon2 > 0.05 && sCurve1 > -0.3) {
+              r += ribbon2 * 115;
+              g += ribbon2 * 155;
+              b += ribbon2 * 195;
+            }
+
+            // 4. Lower-right internal refraction caustic crescent
+            const causticDot = nx * 0.64 + ny * 0.64;
+            if (dist > 0.54 && dist < 0.84 && causticDot > 0.34) {
+              const caustic = ((causticDot - 0.34) / 0.66) * (1.0 - Math.abs(dist - 0.69) / 0.16);
+              if (caustic > 0) {
+                r += caustic * 78;
+                g += caustic * 138;
+                b += caustic * 148;
+              }
+            }
+
+            // 5. Crisp upper-left specular highlight
+            const specDx = nx + 0.38;
+            const specDy = ny + 0.40;
+            const specDist = Math.sqrt(specDx * specDx + specDy * specDy);
+
+            if (specDist < 0.19) {
+              // Pure crisp white highlight core
+              setTexel(data, canvasSize, gx, gy, ts, 255, 255, 255, 255);
+              continue;
+            } else if (specDist < 0.31) {
+              // Bright icy-cyan specular halo
+              r += 125;
+              g += 175;
+              b += 185;
+            }
+
+            // Apply 256-color Bayer dithering
+            const dr = ditherChannel(r, gx, gy, 26);
+            const dg = ditherChannel(g, gx, gy, 26);
+            const db = ditherChannel(b, gx, gy, 26);
+            setTexel(data, canvasSize, gx, gy, ts, dr, dg, db, 255);
+          }
+        }
+
+        octx.putImageData(img, 0, 0);
+        return off;
+      }
+
+      /**
+       * Pre-renders a classic glossy colored marble frame with rotating internal glass sheen
+       * and fixed upper-left pixel highlight.
+       */
+      createGlossyMarbleSprite(radiusPx, pal, spinPhase) {
+        const ts = this.texelSize;
+        const gridR = Math.max(4, Math.round(radiusPx / ts));
+        const gridDim = gridR * 2 + 2;
+        const canvasSize = gridDim * ts;
+
+        const off = document.createElement('canvas');
+        off.width = canvasSize;
+        off.height = canvasSize;
+        const octx = off.getContext('2d');
+        const img = octx.createImageData(canvasSize, canvasSize);
+        const data = img.data;
+
+        const center = (gridDim - 1) / 2;
+        const cosP = Math.cos(spinPhase);
+        const sinP = Math.sin(spinPhase);
+
+        for (let gy = 0; gy < gridDim; gy++) {
+          for (let gx = 0; gx < gridDim; gx++) {
+            const nx = (gx - center) / gridR;
+            const ny = (gy - center) / gridR;
+            const distSq = nx * nx + ny * ny;
+            if (distSq > 1.0) continue;
+
+            const dist = Math.sqrt(distSq);
+            const nz = Math.sqrt(Math.max(0, 1.0 - distSq));
+
+            // Crisp dark rim
+            if (dist > 0.84) {
+              setTexel(data, canvasSize, gx, gy, ts, pal.rim[0], pal.rim[1], pal.rim[2], 255);
+              continue;
+            }
+
+            // Spherical diffuse lighting (upper-left key light)
+            let shade = Math.max(0, nx * -0.52 + ny * -0.55 + nz * 0.65);
+
+            // Subtle internal glass band that rotates as the marble rolls
+            const rx = nx * cosP - ny * sinP;
+            const swirl = Math.sin(rx * 3.8 + nz * 1.6) * 0.14 * nz;
+            shade = Math.max(0, Math.min(1, shade + swirl));
+
+            let r, g, b;
+            if (shade < 0.45) {
+              const t = shade / 0.45;
+              r = pal.dark[0] + (pal.mid[0] - pal.dark[0]) * t;
+              g = pal.dark[1] + (pal.mid[1] - pal.dark[1]) * t;
+              b = pal.dark[2] + (pal.mid[2] - pal.dark[2]) * t;
+            } else {
+              const t = (shade - 0.45) / 0.55;
+              r = pal.mid[0] + (pal.bright[0] - pal.mid[0]) * t;
+              g = pal.mid[1] + (pal.bright[1] - pal.mid[1]) * t;
+              b = pal.mid[2] + (pal.bright[2] - pal.mid[2]) * t;
+            }
+
+            // Secondary bounce reflection on lower-right
+            if (nx * 0.6 + ny * 0.6 > 0.42 && dist > 0.52) {
+              r = r * 0.8 + pal.bright[0] * 0.25;
+              g = g * 0.8 + pal.bright[1] * 0.25;
+              b = b * 0.8 + pal.bright[2] * 0.25;
+            }
+
+            // Crisp white specular dot in upper-left
+            const specDist = Math.hypot(nx + 0.36, ny + 0.38);
+            if (specDist < 0.23) {
+              setTexel(data, canvasSize, gx, gy, ts, 255, 255, 255, 255);
+              continue;
+            }
+
+            setTexel(
+              data, canvasSize, gx, gy, ts,
+              ditherChannel(r, gx, gy, 30),
+              ditherChannel(g, gx, gy, 30),
+              ditherChannel(b, gx, gy, 30),
+              255
+            );
+          }
+        }
+
+        octx.putImageData(img, 0, 0);
+        return off;
+      }
+
+      /**
+       * Pre-renders Easter Egg #1: Yellow Smiley Face Ball ("Sensitive Marble")
+       * Supports both cheerful ":)" and surprised ":O" impact expressions!
+       */
+      createSmileySprite(radiusPx, faceAngle, isSurprised) {
+        const ts = this.texelSize;
+        const gridR = Math.max(5, Math.round(radiusPx / ts));
+        const gridDim = gridR * 2 + 2;
+        const canvasSize = gridDim * ts;
+
+        const off = document.createElement('canvas');
+        off.width = canvasSize;
+        off.height = canvasSize;
+        const octx = off.getContext('2d');
+        const img = octx.createImageData(canvasSize, canvasSize);
+        const data = img.data;
+
+        const center = (gridDim - 1) / 2;
+        const cosA = Math.cos(-faceAngle);
+        const sinA = Math.sin(-faceAngle);
+
+        for (let gy = 0; gy < gridDim; gy++) {
+          for (let gx = 0; gx < gridDim; gx++) {
+            const nx = (gx - center) / gridR;
+            const ny = (gy - center) / gridR;
+            const distSq = nx * nx + ny * ny;
+            if (distSq > 1.0) continue;
+
+            const dist = Math.sqrt(distSq);
+            const nz = Math.sqrt(Math.max(0, 1.0 - distSq));
+
+            // Dark golden-brown pixel rim
+            if (dist > 0.84) {
+              setTexel(data, canvasSize, gx, gy, ts, 82, 54, 0, 255);
+              continue;
+            }
+
+            // Rotate coordinates into the smiley's local frame to draw eyes & mouth
+            const fx = nx * cosA - ny * sinA;
+            const fy = nx * sinA + ny * cosA;
+
+            const leftEye = Math.hypot((fx + 0.27) * 1.15, (fy + 0.22) * 0.9) < (isSurprised ? 0.17 : 0.15);
+            const rightEye = Math.hypot((fx - 0.27) * 1.15, (fy + 0.22) * 0.9) < (isSurprised ? 0.17 : 0.15);
+
+            let isMouth = false;
+            let isMouthHole = false;
+            if (isSurprised) {
+              // Surprised ":O" round open mouth!
+              const mDist = Math.hypot(fx * 1.05, (fy - 0.27) * 0.95);
+              if (mDist < 0.25) {
+                isMouth = true;
+                if (mDist < 0.11) isMouthHole = true;
+              }
+            } else {
+              // Classic happy ":)" smile arc
+              const arcR = Math.hypot(fx, fy + 0.03);
+              if (fy > 0.08 && Math.abs(fx) < 0.48 && arcR > 0.34 && arcR < 0.54) {
+                isMouth = true;
+              }
+            }
+
+            if (leftEye || rightEye || isMouth) {
+              if (isMouthHole) {
+                // Dark crimson interior inside ":O" mouth
+                setTexel(data, canvasSize, gx, gy, ts, 150, 20, 20, 255);
+              } else {
+                setTexel(data, canvasSize, gx, gy, ts, 20, 16, 8, 255);
+              }
+              continue;
+            }
+
+            // Bright yellow shaded sphere + upper-left highlight
+            const specDist = Math.hypot(nx + 0.38, ny + 0.40);
+            if (specDist < 0.19) {
+              setTexel(data, canvasSize, gx, gy, ts, 255, 255, 240, 255);
+              continue;
+            }
+
+            const shade = Math.max(0, nx * -0.45 + ny * -0.50 + nz * 0.72);
+            const r = 195 + shade * 60;
+            const g = 148 + shade * 98;
+            const b = 8 + shade * 48;
+
+            setTexel(
+              data, canvasSize, gx, gy, ts,
+              ditherChannel(r, gx, gy, 26),
+              ditherChannel(g, gx, gy, 26),
+              ditherChannel(b, gx, gy, 26),
+              255
+            );
+          }
+        }
+
+        octx.putImageData(img, 0, 0);
+        return off;
+      }
+
+      /**
+       * Pre-renders Easter Egg #2: Retro Multi-Colored Patterned Cube (Rubik's/Checkered Block)
+       * Rotates cleanly in crisp pixel art with Red, Pink, White, and Yellow tiles.
+       */
+      createCubeSprite(radiusPx, angle) {
+        const ts = this.texelSize;
+        const gridR = Math.max(5, Math.round((radiusPx * 1.05) / ts));
+        const gridDim = gridR * 2 + 4;
+        const canvasSize = gridDim * ts;
+
+        const off = document.createElement('canvas');
+        off.width = canvasSize;
+        off.height = canvasSize;
+        const octx = off.getContext('2d');
+        const img = octx.createImageData(canvasSize, canvasSize);
+        const data = img.data;
+
+        const center = (gridDim - 1) / 2;
+        const cosA = Math.cos(-angle);
+        const sinA = Math.sin(-angle);
+        const halfSide = gridR * 0.82;
+
+        // 2x2x2 retro block tile colors: Red, Hot Pink, Crisp White, Bright Yellow
+        const tileColors = [
+          [232, 30, 42],   // Red
+          [246, 86, 192],  // Pink / Magenta
+          [244, 246, 250], // White
+          [252, 216, 36]   // Yellow
+        ];
+
+        for (let gy = 0; gy < gridDim; gy++) {
+          for (let gx = 0; gx < gridDim; gx++) {
+            const dx = gx - center;
+            const dy = gy - center;
+
+            // Rotate into cube's local square coordinates
+            const lx = dx * cosA - dy * sinA;
+            const ly = dx * sinA + dy * cosA;
+
+            if (Math.abs(lx) > halfSide || Math.abs(ly) > halfSide) continue;
+
+            // Outer dark 1-texel border & center cross grid line (Rubik's 2x2 style)
+            const edgeDist = Math.min(halfSide - Math.abs(lx), halfSide - Math.abs(ly));
+            const crossDist = Math.min(Math.abs(lx), Math.abs(ly));
+
+            if (edgeDist < 0.95 || crossDist < 0.62) {
+              setTexel(data, canvasSize, gx, gy, ts, 24, 20, 28, 255);
+              continue;
+            }
+
+            // Pick quadrant color
+            const qx = lx >= 0 ? 1 : 0;
+            const qy = ly >= 0 ? 1 : 0;
+            const colorIdx = qy * 2 + qx;
+            const base = tileColors[colorIdx];
+
+            // World-space top-left directional bevel lighting
+            const worldLight = (dx * -0.5 + dy * -0.5) / gridR;
+            const boost = 1.0 + worldLight * 0.24;
+
+            setTexel(
+              data, canvasSize, gx, gy, ts,
+              ditherChannel(base[0] * boost, gx, gy, 24),
+              ditherChannel(base[1] * boost, gx, gy, 24),
+              ditherChannel(base[2] * boost, gx, gy, 24),
+              255
+            );
+          }
+        }
+
+        octx.putImageData(img, 0, 0);
+        return off;
+      }
+    }
+
+    // =========================================================================
+    // 2. PROCEDURAL STEREO WEB AUDIO API SYNTHESIZER
+    // =========================================================================
+    class RetroAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.masterGain = null;
+        this.noiseBuffer = null;
+        this.dacCurve = null;
+        this.enabled = true;
+        this.volume = 0.75;
+        this.unlocked = false;
+      }
+
+      /**
+       * Lazily creates and unlocks the Web Audio context on first user interaction.
+       */
+      unlock() {
+        try {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return false;
+            this.ctx = new AudioCtx();
+            this.masterGain = this.ctx.createGain();
+            this.masterGain.gain.value = this.enabled ? this.volume : 0;
+            this.masterGain.connect(this.ctx.destination);
+
+            // Pre-generate 0.5s white noise buffer for tube pop & percussive transients
+            const sr = this.ctx.sampleRate;
+            this.noiseBuffer = this.ctx.createBuffer(1, Math.floor(sr * 0.5), sr);
+            const ch = this.noiseBuffer.getChannelData(0);
+            for (let i = 0; i < ch.length; i++) {
+              ch[i] = Math.random() * 2 - 1;
+            }
+
+            // 8-bit Macintosh 22kHz DAC quantization curve for authentic vocal grit
+            const steps = 36;
+            this.dacCurve = new Float32Array(256);
+            for (let i = 0; i < 256; i++) {
+              const x = (i / 127.5) - 1;
+              this.dacCurve[i] = Math.round(x * steps) / steps;
+            }
+          }
+
+          if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+          }
+
+          this.unlocked = this.ctx.state === 'running' || true;
+          this.syncGain();
+          return true;
+        } catch (err) {
+          console.warn('Web Audio unlock skipped:', err);
+          return false;
+        }
+      }
+
+      syncGain() {
+        if (!this.masterGain || !this.ctx) return;
+        const target = this.enabled ? this.volume : 0;
+        this.masterGain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.015);
+      }
+
+      setEnabled(flag) {
+        this.enabled = flag;
+        if (flag) this.unlock();
+        this.syncGain();
+      }
+
+      setVolume(vol01) {
+        this.volume = Math.max(0, Math.min(1, vol01));
+        this.syncGain();
+      }
+
+      /**
+       * Creates a StereoPannerNode positioned horizontally according to X on screen.
+       */
+      createStereoChain(xNorm) {
+        const panVal = Math.max(-0.88, Math.min(0.88, (xNorm - 0.5) * 1.76));
+        if (this.ctx.createStereoPanner) {
+          const panner = this.ctx.createStereoPanner();
+          panner.pan.value = panVal;
+          panner.connect(this.masterGain);
+          return panner;
+        }
+        return this.masterGain;
+      }
+
+      canPlay() {
+        return this.enabled && this.ctx && this.ctx.state === 'running' && this.volume > 0.001;
+      }
+
+      /**
+       * 1. Tube Launch Sound: Hollow low-pitched pneumatic "thwump-pop" when a marble spawns.
+       */
+      playTubeLaunch(xNorm) {
+        if (!this.canPlay()) return;
+        const now = this.ctx.currentTime;
+        const dest = this.createStereoChain(xNorm);
+
+        // Resonant low hollow tube thump (155Hz -> 68Hz)
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(155, now);
+        osc.frequency.exponentialRampToValueAtTime(66, now + 0.085);
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.28, now + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.095);
+
+        osc.connect(gain);
+        gain.connect(dest);
+        osc.start(now);
+        osc.stop(now + 0.1);
+
+        // Subtle mouth-of-tube pop (210Hz -> 380Hz)
+        const popOsc = this.ctx.createOscillator();
+        const popGain = this.ctx.createGain();
+        popOsc.type = 'sine';
+        popOsc.frequency.setValueAtTime(210, now + 0.012);
+        popOsc.frequency.exponentialRampToValueAtTime(395, now + 0.042);
+
+        popGain.gain.setValueAtTime(0.001, now + 0.012);
+        popGain.gain.linearRampToValueAtTime(0.16, now + 0.018);
+        popGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+        popOsc.connect(popGain);
+        popGain.connect(dest);
+        popOsc.start(now + 0.012);
+        popOsc.stop(now + 0.055);
+      }
+
+      /**
+       * 2. Standard Marble Glass Clink / Click:
+       * Crisp, short woody/glassy percussive click scaled by impact speed & target type.
+       */
+      playGlassClink(xNorm, impactSpeed, targetType = 'pin') {
+        if (!this.canPlay()) return;
+        const speedNorm = Math.min(1, Math.max(0.08, (impactSpeed - 25) / 520));
+        const now = this.ctx.currentTime;
+        const dest = this.createStereoChain(xNorm);
+
+        const jitter = 0.94 + Math.random() * 0.12;
+        const baseFreq = (targetType === 'pin' ? 1780 : 1420) * (0.88 + speedNorm * 0.28) * jitter;
+
+        // Primary crisp glass mode
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(baseFreq, now);
+        osc1.frequency.exponentialRampToValueAtTime(baseFreq * 0.84, now + 0.036);
+
+        // Inharmonic glass overtone
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(baseFreq * 1.53, now);
+
+        const g2 = this.ctx.createGain();
+        g2.gain.value = 0.42;
+
+        const peak = 0.05 + speedNorm * 0.24;
+        const decay = targetType === 'pin' ? 0.042 : 0.028;
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(peak, now + 0.0015);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + decay);
+
+        osc1.connect(gain);
+        osc2.connect(g2);
+        g2.connect(gain);
+        gain.connect(dest);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + decay + 0.006);
+        osc2.stop(now + decay + 0.006);
+
+        // Short woody/glassy contact impulse transient
+        if (this.noiseBuffer) {
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = this.noiseBuffer;
+          const bp = this.ctx.createBiquadFilter();
+          bp.type = 'bandpass';
+          bp.frequency.value = targetType === 'pin' ? 2900 : 2200;
+          bp.Q.value = 5.5;
+
+          const nGain = this.ctx.createGain();
+          nGain.gain.setValueAtTime(peak * 0.55, now);
+          nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.012);
+
+          noise.connect(bp);
+          bp.connect(nGain);
+          nGain.connect(dest);
+          noise.start(now, Math.random() * 0.2, 0.018);
+        }
+      }
+
+      /**
+       * 3. Smiley Ball "Ah! / Ouch!" Yelp ("Some marbles are more sensitive than others"):
+       * Formant-filtered sawtooth/pulse vocal synth (~750Hz & ~1250Hz + 2450Hz presence)
+       * with rapid pitch bend (~440Hz -> 290Hz over ~95ms) + vintage 8-bit Mac DAC character!
+       */
+      playSmileyYelp(xNorm, impactSpeed) {
+        if (!this.canPlay()) return;
+        const speedNorm = Math.min(1, Math.max(0.18, (impactSpeed - 20) / 480));
+        const now = this.ctx.currentTime;
+        const dest = this.createStereoChain(xNorm);
+
+        const duration = 0.085 + speedNorm * 0.038; // ~85ms to ~123ms
+        const pitchJitter = 0.95 + Math.random() * 0.11;
+        const startPitch = (420 + speedNorm * 55) * pitchJitter;
+        const endPitch = (275 + speedNorm * 25) * pitchJitter;
+
+        // Glottal vocal cord source (sawtooth + square harmonic blend)
+        const saw = this.ctx.createOscillator();
+        saw.type = 'sawtooth';
+        saw.frequency.setValueAtTime(startPitch, now);
+        saw.frequency.exponentialRampToValueAtTime(endPitch, now + duration);
+
+        const sq = this.ctx.createOscillator();
+        sq.type = 'square';
+        sq.frequency.setValueAtTime(startPitch * 1.003, now);
+        sq.frequency.exponentialRampToValueAtTime(endPitch * 0.997, now + duration);
+
+        const sqMix = this.ctx.createGain();
+        sqMix.gain.value = 0.32;
+
+        const sourceBus = this.ctx.createGain();
+        sourceBus.gain.value = 1.0;
+        saw.connect(sourceBus);
+        sq.connect(sqMix);
+        sqMix.connect(sourceBus);
+
+        // Formant #1 (~750Hz open "Ah" /ɑ/ throat resonance)
+        const f1 = this.ctx.createBiquadFilter();
+        f1.type = 'bandpass';
+        f1.frequency.setValueAtTime(760, now);
+        f1.frequency.linearRampToValueAtTime(690, now + duration);
+        f1.Q.value = 5.2;
+        const f1Gain = this.ctx.createGain();
+        f1Gain.gain.value = 1.35;
+
+        // Formant #2 (~1250Hz "Ah" oral cavity resonance)
+        const f2 = this.ctx.createBiquadFilter();
+        f2.type = 'bandpass';
+        f2.frequency.setValueAtTime(1260, now);
+        f2.frequency.linearRampToValueAtTime(1150, now + duration);
+        f2.Q.value = 6.0;
+        const f2Gain = this.ctx.createGain();
+        f2Gain.gain.value = 0.95;
+
+        // Formant #3 (~2450Hz vocal brightness/clarity)
+        const f3 = this.ctx.createBiquadFilter();
+        f3.type = 'bandpass';
+        f3.frequency.value = 2450;
+        f3.Q.value = 7.5;
+        const f3Gain = this.ctx.createGain();
+        f3Gain.gain.value = 0.35;
+
+        sourceBus.connect(f1); f1.connect(f1Gain);
+        sourceBus.connect(f2); f2.connect(f2Gain);
+        sourceBus.connect(f3); f3.connect(f3Gain);
+
+        const vocalSum = this.ctx.createGain();
+        f1Gain.connect(vocalSum);
+        f2Gain.connect(vocalSum);
+        f3Gain.connect(vocalSum);
+
+        // Vintage 8-bit sample DAC shaper + 5.2kHz anti-alias filter
+        const shaper = this.ctx.createWaveShaper();
+        if (this.dacCurve) shaper.curve = this.dacCurve;
+
+        const lpf = this.ctx.createBiquadFilter();
+        lpf.type = 'lowpass';
+        lpf.frequency.value = 5200;
+
+        // Crisp vocal envelope ("Ah!")
+        const env = this.ctx.createGain();
+        const peak = 0.22 + speedNorm * 0.24;
+        env.gain.setValueAtTime(0.001, now);
+        env.gain.linearRampToValueAtTime(peak, now + 0.008);
+        env.gain.setValueAtTime(peak * 0.88, now + duration * 0.45);
+        env.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+        vocalSum.connect(shaper);
+        shaper.connect(lpf);
+        lpf.connect(env);
+        env.connect(dest);
+
+        saw.start(now);
+        sq.start(now);
+        saw.stop(now + duration + 0.01);
+        sq.stop(now + duration + 0.01);
+      }
+
+      /**
+       * 4. Cube Thud / Clack:
+       * Hollow plastic / wooden toy block clack sound.
+       */
+      playCubeClack(xNorm, impactSpeed) {
+        if (!this.canPlay()) return;
+        const speedNorm = Math.min(1, Math.max(0.1, (impactSpeed - 25) / 500));
+        const now = this.ctx.currentTime;
+        const dest = this.createStereoChain(xNorm);
+
+        const pitch = (310 + Math.random() * 45) * (0.9 + speedNorm * 0.2);
+
+        // Hollow wooden/plastic body resonance
+        const osc = this.ctx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(pitch, now);
+        osc.frequency.exponentialRampToValueAtTime(128, now + 0.038);
+
+        const gain = this.ctx.createGain();
+        const peak = 0.10 + speedNorm * 0.26;
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(peak, now + 0.002);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.044);
+
+        osc.connect(gain);
+        gain.connect(dest);
+        osc.start(now);
+        osc.stop(now + 0.05);
+
+        // Boxy plastic click bandpass burst
+        if (this.noiseBuffer) {
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = this.noiseBuffer;
+
+          const bp = this.ctx.createBiquadFilter();
+          bp.type = 'bandpass';
+          bp.frequency.value = 780 + Math.random() * 140;
+          bp.Q.value = 4.2;
+
+          const nGain = this.ctx.createGain();
+          nGain.gain.setValueAtTime(peak * 0.85, now);
+          nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.026);
+
+          noise.connect(bp);
+          bp.connect(nGain);
+          nGain.connect(dest);
+          noise.start(now, Math.random() * 0.2, 0.03);
+        }
+      }
+
+      /**
+       * Subtle feedback sound when editing pins (adding / deleting).
+       */
+      playEditorTick(xNorm, isDelete = false) {
+        if (!this.canPlay()) return;
+        const now = this.ctx.currentTime;
+        const dest = this.createStereoChain(xNorm);
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(isDelete ? 660 : 880, now);
+        osc.frequency.exponentialRampToValueAtTime(isDelete ? 320 : 1240, now + 0.045);
+        gain.gain.setValueAtTime(0.14, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        osc.connect(gain);
+        gain.connect(dest);
+        osc.start(now);
+        osc.stop(now + 0.055);
+      }
+    }
+
+    // =========================================================================
+    // 3. PHYSICS & AFTER DARK 2.0 "MARBLES" SIMULATION ENGINE
+    // =========================================================================
+    const PIN_SIZE_RATIOS = {
+      small: 0.74,
+      medium: 1.0,
+      large: 1.34
+    };
+
+    const STANDARD_COLORS = ['red', 'magenta', 'green', 'blue', 'silver'];
+
+    class MarblesApp {
+      constructor() {
+        this.canvas = document.getElementById('marblesCanvas');
+        this.ctx = this.canvas.getContext('2d', { alpha: false });
+
+        this.sprites = new RetroSpriteFactory();
+        this.audio = new RetroAudioEngine();
+
+        // Viewport dimensions in CSS pixels
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        // User-configurable After Dark 2.0 settings
+        this.config = {
+          pinCount: 28,          // Few: 14, Medium: 22, Many: 28 (default)
+          pinSize: 'medium',     // 'small' | 'medium' | 'large'
+          redrawEvery: 100,      // 50 | 100 | 200 | 0 (Infinite)
+          dropMode: 'single',    // 'single' (Authentic 1-by-1) | 'multi' (Continuous Rush)
+          clickType: 'random',   // 'random' | 'standard' | 'smiley' | 'cube'
+          editMode: false,       // Caps-Lock Pin Editor toggle
+          editSubMode: 'move'    // 'move' (drag/add) | 'delete' (tap to remove)
+        };
+
+        // Computed geometry radii
+        this.mediumPinRadius = 24;
+        this.pinRadius = 24;
+        this.marbleRadius = 10;
+
+        // World entities
+        this.pins = [];            // Static glass bumpers { x, y, variant, flash }
+        this.activeMarbles = [];   // Falling dynamic marbles
+        this.settledMarbles = [];  // Locked bottom-pile colliders
+
+        // Timers & state
+        this.nextSpawnTimer = 0.25;
+        this.redrawCurtain = 0;    // >0 during periodic screen wipe animation
+        this.pendingRedraw = false;
+        this.pendingRedrawDelay = 0;
+
+        // Pin editor interaction state
+        this.draggingPin = null;
+        this.dragOffsetX = 0;
+        this.dragOffsetY = 0;
+        this.hoveredPin = null;
+        this.pinWasDragged = false;
+
+        // UI Idle auto-hide tracking
+        this.lastActivityTime = performance.now();
+        this.panelMinimized = false;
+
+        this.lastFrameTime = performance.now();
+
+        this.initCanvasSize(true);
+        this.scatterPins();
+        this.bindUIEvents();
+        this.updateAllUILabels();
+      }
+
+      /**
+       * Computes responsive retro radii so ~28 pins + falling marbles fit comfortably
+       * on desktop, tablet, and smartphone screens while preserving the ~40% marble-to-pin ratio.
+       */
+      computeRadii() {
+        const areaScale = Math.sqrt((this.width * this.height) / (1280 * 800));
+        const clampedScale = Math.max(0.62, Math.min(1.18, areaScale));
+
+        // Base medium pin radius ~25px on desktop, ~16px on compact mobile
+        this.mediumPinRadius = Math.max(15, Math.round((25 * clampedScale) / 2) * 2);
+
+        // Falling marble diameter is ~40% of medium pin diameter (classic After Dark 2.0 proportion)
+        this.marbleRadius = Math.max(6, Math.round(this.mediumPinRadius * 0.40));
+
+        // Selected pin size radius
+        const mult = PIN_SIZE_RATIOS[this.config.pinSize] || 1.0;
+        this.pinRadius = Math.max(11, Math.round((this.mediumPinRadius * mult) / 2) * 2);
+
+        this.sprites.buildAll(this.pinRadius, this.marbleRadius);
+      }
+
+      /**
+       * Resizes canvas cleanly and preserves existing pins & stacked marbles proportionally.
+       */
+      initCanvasSize(initial = false) {
+        const oldW = this.width || window.innerWidth;
+        const oldH = this.height || window.innerHeight;
+
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        this.canvas.width = Math.floor(this.width * this.dpr);
+        this.canvas.height = Math.floor(this.height * this.dpr);
+        this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+        this.ctx.imageSmoothingEnabled = false;
+
+        this.computeRadii();
+
+        if (!initial && oldW > 0 && oldH > 0) {
+          const sx = this.width / oldW;
+          const sy = this.height / oldH;
+          const dh = this.height - oldH;
+
+          // Proportionally reposition pins within safe middle obstacle zone
+          const topMargin = Math.max(this.pinRadius + this.marbleRadius * 3.2, this.height * 0.11);
+          const bottomMargin = Math.max(this.pinRadius + this.marbleRadius * 3.8, this.height * 0.88);
+          const wallMargin = this.pinRadius + this.marbleRadius * 2.3;
+
+          for (const pin of this.pins) {
+            pin.x = Math.max(wallMargin, Math.min(this.width - wallMargin, pin.x * sx));
+            pin.y = Math.max(topMargin, Math.min(bottomMargin, pin.y * sy));
+          }
+
+          // Shift settled bottom pile vertically with the floor so the pyramid stays grounded!
+          for (const m of this.settledMarbles) {
+            m.x = Math.max(this.marbleRadius, Math.min(this.width - this.marbleRadius, m.x * sx));
+            m.y = Math.min(this.height - this.marbleRadius, m.y + dh);
+          }
+        }
+      }
+
+      /**
+       * Scatters static glass pins randomly across the middle ~78% of the screen,
+       * leaving a clean spawn zone at the top and a stacking floor zone at the bottom,
+       * while guaranteeing non-overlapping channels wide enough for marbles to pass.
+       */
+      scatterPins() {
+        const count = this.config.pinCount;
+        const pins = [];
+
+        const topZone = Math.max(this.pinRadius + this.marbleRadius * 3.2, this.height * 0.11);
+        const bottomZone = Math.min(
+          this.height - (this.pinRadius + this.marbleRadius * 4.2),
+          this.height * 0.89
+        );
+        const wallPad = this.pinRadius + this.marbleRadius * 2.4;
+
+        const usableW = Math.max(40, this.width - wallPad * 2);
+        const usableH = Math.max(60, bottomZone - topZone);
+
+        // Ideal center-to-center spacing ensures marbles never wedge permanently between two pins
+        const strictGap = this.pinRadius * 2 + this.marbleRadius * 2.9;
+        const minSafeGap = this.pinRadius * 2 + this.marbleRadius * 2.25;
+
+        for (let i = 0; i < count; i++) {
+          let placed = false;
+          for (let attempt = 0; attempt < 260; attempt++) {
+            // Relax gap slightly on dense/small screens while never dropping below minSafeGap
+            const requiredGap = attempt < 150 ? strictGap : minSafeGap;
+            const px = wallPad + Math.random() * usableW;
+            const py = topZone + Math.random() * usableH;
+
+            let valid = true;
+            for (const other of pins) {
+              const dx = px - other.x;
+              const dy = py - other.y;
+              if (dx * dx + dy * dy < requiredGap * requiredGap) {
+                valid = false;
+                break;
+              }
+            }
+
+            if (valid) {
+              pins.push({
+                x: Math.round(px),
+                y: Math.round(py),
+                variant: i % 4,
+                flash: 0
+              });
+              placed = true;
+              break;
+            }
+          }
+          if (!placed) break;
+        }
+
+        this.pins = pins;
+      }
+
+      /**
+       * Picks marble category using authentic After Dark 2.0 probabilities:
+       * ~82% Standard Glossy, ~12% Yellow Smiley ("Sensitive"), ~6% Patterned Cube.
+       */
+      chooseMarbleType(forcedKind = 'random') {
+        if (forcedKind === 'smiley') {
+          return { kind: 'smiley', color: 'yellow' };
+        }
+        if (forcedKind === 'cube') {
+          return { kind: 'cube', color: 'multi' };
+        }
+        if (forcedKind === 'standard') {
+          const c = STANDARD_COLORS[Math.floor(Math.random() * STANDARD_COLORS.length)];
+          return { kind: 'standard', color: c };
+        }
+
+        const roll = Math.random();
+        if (roll < 0.06) {
+          return { kind: 'cube', color: 'multi' };
+        } else if (roll < 0.18) {
+          return { kind: 'smiley', color: 'yellow' };
+        } else {
+          const c = STANDARD_COLORS[Math.floor(Math.random() * STANDARD_COLORS.length)];
+          return { kind: 'standard', color: c };
+        }
+      }
+
+      /**
+       * Spawns a new falling marble from the top of the screen (y = 0) with subtle drift.
+       */
+      spawnMarble(customX = null, forcedKind = 'random', isAutoSpawn = false) {
+        const r = this.marbleRadius;
+        const pad = r + 6;
+        const x = customX !== null
+          ? Math.max(pad, Math.min(this.width - pad, customX))
+          : pad + Math.random() * Math.max(10, this.width - pad * 2);
+
+        const spec = this.chooseMarbleType(forcedKind);
+
+        const marble = {
+          x,
+          y: r + 1,
+          vx: (Math.random() - 0.5) * 44, // Tiny random horizontal drift
+          vy: 28 + Math.random() * 20,
+          r,
+          kind: spec.kind,
+          color: spec.color,
+          angle: Math.random() * Math.PI * 2,
+          omega: (Math.random() - 0.5) * 3.5,
+          surprisedTimer: 0,
+          soundCooldown: 0,
+          restTimer: 0,
+          stuckTimer: 0,
+          anchorX: x,
+          anchorY: r + 1,
+          isAuto: isAutoSpawn
+        };
+
+        this.activeMarbles.push(marble);
+        this.audio.playTubeLaunch(x / this.width);
+      }
+
+      /**
+       * Triggers collision audio + facial expression reaction for a marble impact.
+       */
+      triggerMarbleImpact(marble, impactSpeed, targetType) {
+        if (impactSpeed < 28) return;
+
+        // Smiley ball shows surprised ":O" face on any noticeable impact!
+        if (marble.kind === 'smiley') {
+          marble.surprisedTimer = 0.24;
+        }
+
+        if (marble.soundCooldown > 0) return;
+        marble.soundCooldown = 0.036; // Prevent multi-substep sound chatter
+
+        const xNorm = marble.x / Math.max(1, this.width);
+        if (marble.kind === 'smiley') {
+          this.audio.playSmileyYelp(xNorm, impactSpeed);
+        } else if (marble.kind === 'cube') {
+          this.audio.playCubeClack(xNorm, impactSpeed);
+        } else {
+          this.audio.playGlassClink(xNorm, impactSpeed, targetType);
+        }
+      }
+
+      /**
+       * Clears the stacked marble pile with a brief classic CRT wipe.
+       */
+      clearPile(reshuffle = false) {
+        this.settledMarbles = [];
+        this.activeMarbles = [];
+        if (reshuffle) {
+          this.scatterPins();
+        }
+        this.redrawCurtain = 1.0;
+        this.pendingRedraw = false;
+        this.nextSpawnTimer = 0.35;
+        this.updateCounterUI();
+      }
+
+      /**
+       * Locks an active marble into the static bottom pile.
+       */
+      lockMarble(marble) {
+        marble.vx = 0;
+        marble.vy = 0;
+        marble.omega = 0;
+        marble.surprisedTimer = 0; // Return smiley face to cheerful ":)" when settled
+
+        this.settledMarbles.push({
+          x: marble.x,
+          y: marble.y,
+          r: marble.r,
+          kind: marble.kind,
+          color: marble.color,
+          angle: marble.angle
+        });
+
+        this.updateCounterUI();
+
+        // Check periodic Redraw Every threshold (or if pile grew up into the spawn zone)
+        const hitLimit = this.config.redrawEvery > 0 &&
+                         this.settledMarbles.length >= this.config.redrawEvery;
+        const hitCeiling = marble.y < this.height * 0.14;
+
+        if ((hitLimit || hitCeiling) && !this.pendingRedraw) {
+          this.pendingRedraw = true;
+          this.pendingRedrawDelay = 0.55;
+        }
+      }
+
+      /**
+       * Main per-frame physics update with 6 sub-steps for rock-solid circle collisions.
+       */
+      update(dt) {
+        // Animate redraw curtain wipe
+        if (this.redrawCurtain > 0) {
+          this.redrawCurtain = Math.max(0, this.redrawCurtain - dt * 3.4);
+        }
+
+        // Decay pin hit glint
+        for (const pin of this.pins) {
+          if (pin.flash > 0) pin.flash = Math.max(0, pin.flash - dt * 5.0);
+        }
+
+        // Pause launching while editing pins
+        if (this.config.editMode) return;
+
+        // Handle scheduled periodic Redraw
+        if (this.pendingRedraw) {
+          this.pendingRedrawDelay -= dt;
+          if (this.pendingRedrawDelay <= 0) {
+            this.clearPile(false);
+            this.showToast('Redraw: 積み上がったマーブルをクリアしました');
+          }
+          return;
+        }
+
+        // Automatic Marble Spawner
+        this.nextSpawnTimer -= dt;
+        if (this.config.dropMode === 'single') {
+          // Authentic After Dark 2.0 mode: 1 auto marble at a time!
+          const hasAutoActive = this.activeMarbles.some(m => m.isAuto);
+          if (!hasAutoActive && this.nextSpawnTimer <= 0) {
+            this.spawnMarble(null, 'random', true);
+            this.nextSpawnTimer = 0.16;
+          }
+        } else {
+          // Multi-drop Rush mode: launch continuously every ~0.48s (cap active at 24 for clarity)
+          if (this.nextSpawnTimer <= 0 && this.activeMarbles.length < 24) {
+            this.spawnMarble(null, 'random', true);
+            this.nextSpawnTimer = 0.46;
+          }
+        }
+
+        // Sub-stepped 2D Rigid Circle Physics
+        const SUBSTEPS = 6;
+        const subDt = dt / SUBSTEPS;
+        const gravity = 790;          // Crisp classic 90s fall speed
+        const pinRestitution = 0.68;  // Authentic lively bounce off glass pins
+        const pileRestitution = 0.45; // Softer bounce on floor & settled pile
+        const wallRestitution = 0.64;
+
+        for (let step = 0; step < SUBSTEPS; step++) {
+          // 1. Integrate motion & collide against walls, floor, pins, and settled pile
+          for (let i = 0; i < this.activeMarbles.length; i++) {
+            const m = this.activeMarbles[i];
+
+            m.vy += gravity * subDt;
+            // Subtle air drag cap so terminal velocity stays predictable
+            if (m.vy > 860) m.vy = 860;
+
+            m.x += m.vx * subDt;
+            m.y += m.vy * subDt;
+            m.angle += m.omega * subDt;
+
+            // Left wall collision
+            if (m.x < m.r) {
+              const imp = Math.abs(m.vx);
+              m.x = m.r;
+              m.vx = Math.abs(m.vx) * wallRestitution;
+              m.omega = (m.vy / m.r) * 0.35;
+              this.triggerMarbleImpact(m, imp, 'wall');
+            }
+            // Right wall collision
+            else if (m.x > this.width - m.r) {
+              const imp = Math.abs(m.vx);
+              m.x = this.width - m.r;
+              m.vx = -Math.abs(m.vx) * wallRestitution;
+              m.omega = -(m.vy / m.r) * 0.35;
+              this.triggerMarbleImpact(m, imp, 'wall');
+            }
+
+            // Bottom floor collision
+            if (m.y > this.height - m.r) {
+              const imp = Math.abs(m.vy);
+              m.y = this.height - m.r;
+              if (m.vy > 0) {
+                m.vy = -m.vy * pileRestitution;
+                // Dampen tiny micro-bounces near rest so floor lock is crisp
+                if (Math.abs(m.vy) < 26) m.vy = 0;
+              }
+              m.vx *= 0.94;
+              m.omega = m.vx / m.r;
+              this.triggerMarbleImpact(m, imp, 'floor');
+            }
+
+            // Collide against Static Glass Pins
+            const pinMinDist = m.r + this.pinRadius;
+            const pinMinDistSq = pinMinDist * pinMinDist;
+
+            for (let p = 0; p < this.pins.length; p++) {
+              const pin = this.pins[p];
+              const dx = m.x - pin.x;
+              const dy = m.y - pin.y;
+              const dSq = dx * dx + dy * dy;
+
+              if (dSq < pinMinDistSq) {
+                const dist = Math.sqrt(dSq) || 0.001;
+                const nx = dx / dist;
+                const ny = dy / dist;
+
+                // Push marble cleanly outside pin surface
+                const overlap = pinMinDist - dist;
+                m.x += nx * overlap;
+                m.y += ny * overlap;
+
+                // Relative velocity along normal
+                const vn = m.vx * nx + m.vy * ny;
+                if (vn < 0) {
+                  const imp = -vn;
+                  m.vx -= (1 + pinRestitution) * vn * nx;
+                  m.vy -= (1 + pinRestitution) * vn * ny;
+
+                  // Anti-balance micro-jitter when hitting nearly dead-center on top of a pin
+                  if (Math.abs(nx) < 0.09 && ny < -0.92) {
+                    const dir = (Math.random() < 0.5 ? -1 : 1);
+                    m.vx += dir * (22 + Math.random() * 18);
+                  }
+
+                  // Cube tumbles with extra angular kick on corner impacts!
+                  const tangentVel = -m.vx * ny + m.vy * nx;
+                  if (m.kind === 'cube') {
+                    const cornerKick = Math.sin(m.angle * 4) * 28;
+                    m.vx += -ny * cornerKick * 0.35;
+                    m.omega = (tangentVel / m.r) * 0.85 + Math.cos(m.angle * 4) * 3.2;
+                  } else {
+                    m.omega = (tangentVel / m.r) * 0.65;
+                  }
+
+                  if (imp > 35) pin.flash = Math.min(1, imp / 380);
+                  this.triggerMarbleImpact(m, imp, 'pin');
+                }
+              }
+            }
+
+            // Collide against Locked Settled Marbles at the Bottom
+            for (let s = this.settledMarbles.length - 1; s >= 0; s--) {
+              const sm = this.settledMarbles[s];
+              const minDist = m.r + sm.r;
+              const dx = m.x - sm.x;
+              // Fast bounding-box reject
+              if (Math.abs(dx) >= minDist) continue;
+              const dy = m.y - sm.y;
+              if (Math.abs(dy) >= minDist) continue;
+
+              const dSq = dx * dx + dy * dy;
+              if (dSq < minDist * minDist) {
+                const dist = Math.sqrt(dSq) || 0.001;
+                const nx = dx / dist;
+                const ny = dy / dist;
+
+                const overlap = minDist - dist;
+                m.x += nx * overlap;
+                m.y += ny * overlap;
+
+                const vn = m.vx * nx + m.vy * ny;
+                if (vn < 0) {
+                  const imp = -vn;
+                  m.vx -= (1 + pileRestitution) * vn * nx;
+                  m.vy -= (1 + pileRestitution) * vn * ny;
+
+                  // Tangential rolling damping so marbles nestle smoothly into valleys
+                  const tx = -ny;
+                  const ty = nx;
+                  const vt = m.vx * tx + m.vy * ty;
+                  m.vx -= vt * 0.14 * tx;
+                  m.vy -= vt * 0.14 * ty;
+                  m.omega = (vt / m.r) * 0.75;
+
+                  this.triggerMarbleImpact(m, imp, 'settled');
+                }
+              }
+            }
+          }
+
+          // 2. Active-vs-Active Marble Collisions (for Multi-drop & extra clicked marbles)
+          for (let i = 0; i < this.activeMarbles.length; i++) {
+            for (let j = i + 1; j < this.activeMarbles.length; j++) {
+              const a = this.activeMarbles[i];
+              const b = this.activeMarbles[j];
+              const minDist = a.r + b.r;
+              const dx = b.x - a.x;
+              const dy = b.y - a.y;
+              const dSq = dx * dx + dy * dy;
+
+              if (dSq < minDist * minDist) {
+                const dist = Math.sqrt(dSq) || 0.001;
+                const nx = dx / dist;
+                const ny = dy / dist;
+                const overlap = (minDist - dist) * 0.5;
+
+                a.x -= nx * overlap;
+                a.y -= ny * overlap;
+                b.x += nx * overlap;
+                b.y += ny * overlap;
+
+                const rvx = b.vx - a.vx;
+                const rvy = b.vy - a.vy;
+                const vn = rvx * nx + rvy * ny;
+
+                if (vn < 0) {
+                  const jImp = -(1 + 0.62) * vn * 0.5;
+                  a.vx -= jImp * nx;
+                  a.vy -= jImp * ny;
+                  b.vx += jImp * nx;
+                  b.vy += jImp * ny;
+
+                  const imp = Math.abs(vn);
+                  this.triggerMarbleImpact(a, imp, 'marble');
+                  this.triggerMarbleImpact(b, imp, 'marble');
+                }
+              }
+            }
+          }
+        }
+
+        // 3. Per-frame Timers & "Magically Locking Pile at the Bottom" Check
+        for (let i = this.activeMarbles.length - 1; i >= 0; i--) {
+          const m = this.activeMarbles[i];
+
+          if (m.surprisedTimer > 0) m.surprisedTimer = Math.max(0, m.surprisedTimer - dt);
+          if (m.soundCooldown > 0) m.soundCooldown = Math.max(0, m.soundCooldown - dt);
+
+          const speed = Math.hypot(m.vx, m.vy);
+
+          // Check if resting on floor or supported by at least one settled marble
+          let supportedByBottomOrPile = (m.y >= this.height - m.r - 2.2);
+          if (!supportedByBottomOrPile) {
+            for (let s = this.settledMarbles.length - 1; s >= 0; s--) {
+              const sm = this.settledMarbles[s];
+              if (sm.y >= m.y - m.r * 0.35) {
+                const d = Math.hypot(m.x - sm.x, m.y - sm.y);
+                if (d <= m.r + sm.r + 2.4) {
+                  supportedByBottomOrPile = true;
+                  break;
+                }
+              }
+            }
+          }
+
+          if (supportedByBottomOrPile && speed < 34) {
+            // Gentle settle damping so marbles lock crisply like After Dark 2.0
+            m.vx *= Math.pow(0.08, dt);
+            m.vy *= Math.pow(0.08, dt);
+            m.restTimer += dt;
+          } else {
+            m.restTimer = Math.max(0, m.restTimer - dt * 2);
+          }
+
+          // Anti-stuck safeguard (>3.0 seconds trapped in any pocket locks it cleanly)
+          if (Math.hypot(m.x - m.anchorX, m.y - m.anchorY) > 7) {
+            m.anchorX = m.x;
+            m.anchorY = m.y;
+            m.stuckTimer = 0;
+          } else {
+            m.stuckTimer += dt;
+          }
+
+          if (m.restTimer >= 0.14 || (supportedByBottomOrPile && speed < 6.5 && m.restTimer > 0.04) || m.stuckTimer >= 3.0) {
+            this.activeMarbles.splice(i, 1);
+            this.lockMarble(m);
+            // Reset single-drop timer so the next marble launches promptly!
+            if (this.config.dropMode === 'single') {
+              this.nextSpawnTimer = 0.12;
+            }
+          }
+        }
+      }
+
+      /**
+       * Draws a single marble sprite (standard, smiley, or cube) at integer pixel coordinates.
+       */
+      drawMarbleEntity(m, isSettled = false) {
+        let sprite = null;
+        if (m.kind === 'smiley') {
+          const frames = (!isSettled && m.surprisedTimer > 0)
+            ? this.sprites.smileySurprisedFrames
+            : this.sprites.smileyHappyFrames;
+          const idx = ((Math.round((m.angle / (Math.PI * 2)) * frames.length) % frames.length) + frames.length) % frames.length;
+          sprite = frames[idx];
+        } else if (m.kind === 'cube') {
+          const frames = this.sprites.cubeFrames;
+          const idx = ((Math.round((m.angle / (Math.PI * 2)) * frames.length) % frames.length) + frames.length) % frames.length;
+          sprite = frames[idx];
+        } else {
+          const frames = this.sprites.standardFrames[m.color] || this.sprites.standardFrames.red;
+          const idx = ((Math.round((m.angle / (Math.PI * 2)) * frames.length) % frames.length) + frames.length) % frames.length;
+          sprite = frames[idx];
+        }
+
+        if (!sprite) return;
+        const drawX = Math.round(m.x - sprite.width / 2);
+        const drawY = Math.round(m.y - sprite.height / 2);
+        this.ctx.drawImage(sprite, drawX, drawY);
+      }
+
+      /**
+       * Renders the pitch-black CRT canvas, glass pins, settled bottom pile, and falling marbles.
+       */
+      render() {
+        const ctx = this.ctx;
+
+        // 1. Pure pitch-black (#000000) background
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, this.width, this.height);
+
+        // Optional Edit Pins guide boundaries
+        if (this.config.editMode) {
+          const topZone = Math.max(this.pinRadius + this.marbleRadius * 3.2, this.height * 0.11);
+          const bottomZone = Math.min(
+            this.height - (this.pinRadius + this.marbleRadius * 4.2),
+            this.height * 0.89
+          );
+          ctx.save();
+          ctx.strokeStyle = '#1f3a44';
+          ctx.setLineDash([4, 6]);
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, topZone);
+          ctx.lineTo(this.width, topZone);
+          ctx.moveTo(0, bottomZone);
+          ctx.lineTo(this.width, bottomZone);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // 2. Render Static Cat's-Eye Glass Pins
+        for (let i = 0; i < this.pins.length; i++) {
+          const pin = this.pins[i];
+          const sprite = this.sprites.pinSprites[pin.variant % this.sprites.pinSprites.length];
+          if (sprite) {
+            const dx = Math.round(pin.x - sprite.width / 2);
+            const dy = Math.round(pin.y - sprite.height / 2);
+            ctx.drawImage(sprite, dx, dy);
+          }
+
+          // Subtle glass glint ring on impact
+          if (pin.flash > 0.05) {
+            ctx.save();
+            ctx.strokeStyle = `rgba(185, 255, 248, ${pin.flash * 0.35})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(Math.round(pin.x), Math.round(pin.y), this.pinRadius - 1, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // Retro selection outline in Edit Pins Mode
+          if (this.config.editMode && (this.hoveredPin === pin || this.draggingPin === pin)) {
+            ctx.save();
+            ctx.strokeStyle = this.config.editSubMode === 'delete' ? '#ff5555' : '#ffe866';
+            ctx.setLineDash([3, 3]);
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(Math.round(pin.x), Math.round(pin.y), this.pinRadius + 4, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        // 3. Render Magically Stacked Marbles at the Bottom
+        for (let i = 0; i < this.settledMarbles.length; i++) {
+          this.drawMarbleEntity(this.settledMarbles[i], true);
+        }
+
+        // 4. Render Falling Active Marbles
+        for (let i = 0; i < this.activeMarbles.length; i++) {
+          this.drawMarbleEntity(this.activeMarbles[i], false);
+        }
+
+        // 5. Classic Periodic Redraw Scanline Wipe Effect
+        if (this.redrawCurtain > 0) {
+          const wipeY = (1.0 - this.redrawCurtain) * this.height;
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(0, wipeY, this.width, this.height - wipeY);
+          ctx.fillStyle = '#5eead4';
+          ctx.fillRect(0, Math.floor(wipeY), this.width, 2);
+        }
+      }
+
+      // =======================================================================
+      // 4. USER INTERACTION, PIN EDITOR & RETRO CONTROL PANEL BINDINGS
+      // =======================================================================
+      findPinAt(x, y, extraPad = 4) {
+        const hitR = this.pinRadius + extraPad;
+        for (let i = this.pins.length - 1; i >= 0; i--) {
+          const p = this.pins[i];
+          const dx = x - p.x;
+          const dy = y - p.y;
+          if (dx * dx + dy * dy <= hitR * hitR) return p;
+        }
+        return null;
+      }
+
+      canPlacePinAt(x, y, ignorePin = null) {
+        const margin = this.pinRadius + 4;
+        if (x < margin || x > this.width - margin) return false;
+        if (y < this.pinRadius + this.marbleRadius * 2.2 || y > this.height - this.pinRadius - this.marbleRadius * 2.2) {
+          return false;
+        }
+        const minDist = this.pinRadius * 2 + 4;
+        for (const p of this.pins) {
+          if (p === ignorePin) continue;
+          const dx = x - p.x;
+          const dy = y - p.y;
+          if (dx * dx + dy * dy < minDist * minDist) return false;
+        }
+        return true;
+      }
+
+      bindUIEvents() {
+        const audioUnlockBadge = document.getElementById('audioUnlockBadge');
+        const controlPanel = document.getElementById('controlPanel');
+        const minimizedDockBtn = document.getElementById('minimizedDockBtn');
+        const editBanner = document.getElementById('editModeBanner');
+
+        const markActivity = () => {
+          this.lastActivityTime = performance.now();
+          document.body.classList.remove('cursor-hidden');
+          controlPanel.classList.remove('ui-idle-hidden');
+          minimizedDockBtn.classList.remove('ui-idle-hidden');
+        };
+
+        const unlockAudioFromGesture = (playConfirmClink = false) => {
+          const wasUnlocked = this.audio.unlocked && this.audio.ctx && this.audio.ctx.state === 'running';
+          this.audio.unlock();
+          if (this.audio.ctx) {
+            audioUnlockBadge.classList.add('hidden');
+            if (!wasUnlocked && playConfirmClink) {
+              this.audio.playGlassClink(0.5, 220, 'pin');
+            }
+          }
+        };
+
+        audioUnlockBadge.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.audio.setEnabled(true);
+          unlockAudioFromGesture(true);
+          this.updateAllUILabels();
+          this.showToast('🔊 Retro Web Audio シンセサイザーを有効化しました！');
+        });
+
+        // Window Resize
+        window.addEventListener('resize', () => {
+          this.initCanvasSize(false);
+        });
+
+        // Activity tracking for screensaver cursor/UI auto-hide
+        ['mousemove', 'mousedown', 'touchstart', 'keydown'].forEach(ev => {
+          window.addEventListener(ev, markActivity, { passive: true });
+        });
+
+        // Check idle every 500ms to auto-hide UI in Fullscreen (or after 6s idle)
+        setInterval(() => {
+          if (this.config.editMode) return;
+          const idleMs = performance.now() - this.lastActivityTime;
+          const isFs = !!document.fullscreenElement;
+          const threshold = isFs ? 3500 : 8500;
+          const hoveringPanel = controlPanel.matches(':hover');
+
+          if (idleMs > threshold && !hoveringPanel) {
+            if (isFs) document.body.classList.add('cursor-hidden');
+            if (isFs || this.panelMinimized) {
+              controlPanel.classList.add('ui-idle-hidden');
+              minimizedDockBtn.classList.add('ui-idle-hidden');
+            }
+          }
+        }, 500);
+
+        // Canvas Pointer Interactions (Drop Extra Marbles OR Edit Pins)
+        const getCanvasPoint = (e) => {
+          const rect = this.canvas.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          return { x: clientX - rect.left, y: clientY - rect.top };
+        };
+
+        this.canvas.addEventListener('pointerdown', (e) => {
+          unlockAudioFromGesture(false);
+          markActivity();
+
+          const pt = { x: e.clientX, y: e.clientY };
+
+          if (this.config.editMode) {
+            // Right-click deletes pin immediately
+            if (e.button === 2) {
+              const target = this.findPinAt(pt.x, pt.y);
+              if (target) {
+                this.pins = this.pins.filter(p => p !== target);
+                this.hoveredPin = null;
+                this.audio.playEditorTick(pt.x / this.width, true);
+                this.updateCounterUI();
+              }
+              return;
+            }
+
+            const hitPin = this.findPinAt(pt.x, pt.y);
+            if (this.config.editSubMode === 'delete') {
+              if (hitPin) {
+                this.pins = this.pins.filter(p => p !== hitPin);
+                this.hoveredPin = null;
+                this.audio.playEditorTick(pt.x / this.width, true);
+                this.updateCounterUI();
+              }
+              return;
+            }
+
+            if (hitPin) {
+              this.draggingPin = hitPin;
+              this.dragOffsetX = pt.x - hitPin.x;
+              this.dragOffsetY = pt.y - hitPin.y;
+              this.pinWasDragged = false;
+              this.canvas.setPointerCapture(e.pointerId);
+            } else if (this.canPlacePinAt(pt.x, pt.y)) {
+              this.pins.push({
+                x: Math.round(pt.x),
+                y: Math.round(pt.y),
+                variant: this.pins.length % 4,
+                flash: 0.7
+              });
+              this.audio.playEditorTick(pt.x / this.width, false);
+              this.updateCounterUI();
+            } else {
+              this.showToast('ここにはピンを配置できません（端や他のピンに近すぎます）');
+            }
+            return;
+          }
+
+          // Normal Mode: Click anywhere on canvas drops an extra marble at that X coordinate!
+          if (e.button === 0) {
+            this.spawnMarble(pt.x, this.config.clickType, false);
+          }
+        });
+
+        this.canvas.addEventListener('pointermove', (e) => {
+          if (!this.config.editMode) return;
+          const pt = { x: e.clientX, y: e.clientY };
+
+          if (this.draggingPin) {
+            const nx = pt.x - this.dragOffsetX;
+            const ny = pt.y - this.dragOffsetY;
+            if (this.canPlacePinAt(nx, ny, this.draggingPin)) {
+              this.draggingPin.x = Math.round(nx);
+              this.draggingPin.y = Math.round(ny);
+              this.pinWasDragged = true;
+            }
+          } else {
+            this.hoveredPin = this.findPinAt(pt.x, pt.y);
+            this.canvas.style.cursor = this.hoveredPin
+              ? (this.config.editSubMode === 'delete' ? 'not-allowed' : 'grab')
+              : 'crosshair';
+          }
+        });
+
+        const endPinDrag = () => {
+          this.draggingPin = null;
+        };
+        this.canvas.addEventListener('pointerup', endPinDrag);
+        this.canvas.addEventListener('pointercancel', endPinDrag);
+
+        // Right-click & Double-click to delete pin in Edit Mode
+        this.canvas.addEventListener('contextmenu', (e) => {
+          if (this.config.editMode) e.preventDefault();
+        });
+
+        this.canvas.addEventListener('dblclick', (e) => {
+          if (!this.config.editMode) return;
+          const hit = this.findPinAt(e.clientX, e.clientY);
+          if (hit) {
+            this.pins = this.pins.filter(p => p !== hit);
+            this.hoveredPin = null;
+            this.audio.playEditorTick(e.clientX / this.width, true);
+            this.updateCounterUI();
+          }
+        });
+
+        // Draggable Retro Control Panel Title Bar
+        this.setupDraggableWindow(controlPanel, document.getElementById('panelTitleBar'));
+
+        // Panel Collapse / Expand
+        const setPanelMinimized = (min) => {
+          this.panelMinimized = min;
+          if (min) {
+            controlPanel.classList.add('hidden');
+            minimizedDockBtn.classList.remove('hidden');
+            minimizedDockBtn.classList.add('flex');
+          } else {
+            controlPanel.classList.remove('hidden');
+            minimizedDockBtn.classList.add('hidden');
+            minimizedDockBtn.classList.remove('flex');
+          }
+        };
+
+        document.getElementById('collapsePanelBtn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          unlockAudioFromGesture(false);
+          setPanelMinimized(true);
+        });
+        document.getElementById('hideUiNowBtn').addEventListener('click', () => {
+          unlockAudioFromGesture(false);
+          setPanelMinimized(true);
+        });
+        minimizedDockBtn.addEventListener('click', () => {
+          unlockAudioFromGesture(false);
+          setPanelMinimized(false);
+        });
+
+        // Sound ON/OFF & Volume Slider
+        document.getElementById('soundToggleBtn').addEventListener('click', () => {
+          this.audio.setEnabled(!this.audio.enabled);
+          if (this.audio.enabled) {
+            unlockAudioFromGesture(true);
+          }
+          this.updateAllUILabels();
+        });
+
+        const volumeSlider = document.getElementById('volumeSlider');
+        volumeSlider.addEventListener('input', () => {
+          const val = parseInt(volumeSlider.value, 10);
+          this.audio.setVolume(val / 100);
+          if (val > 0 && !this.audio.enabled) this.audio.setEnabled(true);
+          unlockAudioFromGesture(false);
+          this.updateAllUILabels();
+        });
+
+        // # Pins Selector (14 / 22 / 28)
+        document.querySelectorAll('.pin-count-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            unlockAudioFromGesture(false);
+            this.config.pinCount = parseInt(btn.dataset.pincount, 10);
+            this.scatterPins();
+            this.clearPile(false);
+            this.updateAllUILabels();
+          });
+        });
+
+        // Pin Size Selector (Small / Medium / Large)
+        document.querySelectorAll('.pin-size-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            unlockAudioFromGesture(false);
+            this.config.pinSize = btn.dataset.pinsize;
+            this.computeRadii();
+            this.scatterPins();
+            this.clearPile(false);
+            this.updateAllUILabels();
+          });
+        });
+
+        // Redraw Every Selector (50 / 100 / 200 / Infinite)
+        document.querySelectorAll('.redraw-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            unlockAudioFromGesture(false);
+            this.config.redrawEvery = parseInt(btn.dataset.redraw, 10);
+            this.updateAllUILabels();
+          });
+        });
+
+        // Clear Pile & Shuffle Pins Buttons
+        document.getElementById('clearPileBtn').addEventListener('click', () => {
+          unlockAudioFromGesture(false);
+          this.clearPile(false);
+          this.audio.playEditorTick(0.5, true);
+        });
+
+        document.getElementById('shufflePinsBtn').addEventListener('click', () => {
+          unlockAudioFromGesture(false);
+          this.scatterPins();
+          this.clearPile(false);
+          this.audio.playEditorTick(0.5, false);
+          this.updateAllUILabels();
+        });
+
+        // Drop Mode Selector (1-by-1 vs Multi-drop)
+        document.querySelectorAll('.drop-mode-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            unlockAudioFromGesture(false);
+            this.config.dropMode = btn.dataset.dropmode;
+            this.nextSpawnTimer = 0.05;
+            this.updateAllUILabels();
+          });
+        });
+
+        // Click Drop Type Selector
+        document.querySelectorAll('.click-type-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            unlockAudioFromGesture(false);
+            this.config.clickType = btn.dataset.clicktype;
+            this.updateAllUILabels();
+          });
+        });
+
+        // Instant Easter Egg Test Buttons
+        document.getElementById('spawnSmileyNowBtn').addEventListener('click', () => {
+          unlockAudioFromGesture(false);
+          if (this.config.editMode) this.toggleEditMode(false);
+          this.spawnMarble(null, 'smiley', false);
+        });
+
+        document.getElementById('spawnCubeNowBtn').addEventListener('click', () => {
+          unlockAudioFromGesture(false);
+          if (this.config.editMode) this.toggleEditMode(false);
+          this.spawnMarble(null, 'cube', false);
+        });
+
+        // Edit Pins Mode Toggle & Sub-buttons
+        document.getElementById('editPinsToggleBtn').addEventListener('click', () => {
+          unlockAudioFromGesture(false);
+          this.toggleEditMode(!this.config.editMode);
+        });
+        document.getElementById('editDoneBtn').addEventListener('click', () => {
+          this.toggleEditMode(false);
+        });
+        document.getElementById('editSubMoveBtn').addEventListener('click', () => {
+          this.config.editSubMode = 'move';
+          this.updateAllUILabels();
+        });
+        document.getElementById('editSubDeleteBtn').addEventListener('click', () => {
+          this.config.editSubMode = 'delete';
+          this.updateAllUILabels();
+        });
+
+        // Fullscreen Toggle
+        const toggleFullscreen = () => {
+          unlockAudioFromGesture(false);
+          if (!document.fullscreenElement) {
+            const req = document.documentElement.requestFullscreen ||
+                        document.documentElement.webkitRequestFullscreen;
+            if (req) {
+              req.call(document.documentElement).catch(() => {
+                this.showToast('このプレビュー枠ではフルスクリーンが制限されています');
+              });
+            }
+          } else {
+            const exit = document.exitFullscreen || document.webkitExitFullscreen;
+            if (exit) exit.call(document);
+          }
+        };
+        document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+        document.getElementById('fullscreenQuickBtn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleFullscreen();
+        });
+
+        // Nostalgic Keyboard Shortcuts (including CapsLock for Edit Pins!)
+        window.addEventListener('keydown', (e) => {
+          unlockAudioFromGesture(false);
+          if (e.key === 'CapsLock' || e.key === 'e' || e.key === 'E') {
+            this.toggleEditMode(!this.config.editMode);
+          } else if (e.key === 'h' || e.key === 'H') {
+            setPanelMinimized(!this.panelMinimized);
+          } else if (e.key === ' ') {
+            e.preventDefault();
+            if (!this.config.editMode) this.spawnMarble(null, this.config.clickType, false);
+          } else if (e.key === 's' || e.key === 'S') {
+            if (!this.config.editMode) this.spawnMarble(null, 'smiley', false);
+          } else if (e.key === 'c' || e.key === 'C') {
+            if (!this.config.editMode) this.spawnMarble(null, 'cube', false);
+          } else if (e.key === 'r' || e.key === 'R') {
+            this.clearPile(false);
+          } else if (e.key === 'f' || e.key === 'F') {
+            toggleFullscreen();
+          } else if (e.key === 'm' || e.key === 'M') {
+            this.audio.setEnabled(!this.audio.enabled);
+            this.updateAllUILabels();
+          }
+        });
+
+        // Hide Edit Banner initially
+        editBanner.classList.add('hidden');
+      }
+
+      toggleEditMode(enable) {
+        this.config.editMode = enable;
+        this.draggingPin = null;
+        this.hoveredPin = null;
+        this.canvas.style.cursor = enable ? 'crosshair' : 'default';
+
+        const editBanner = document.getElementById('editModeBanner');
+        if (enable) {
+          editBanner.classList.remove('hidden');
+          this.showToast('🔧 ピン編集モードON：ドラッグで移動・クリックで追加・右/Wクリックで削除');
+        } else {
+          editBanner.classList.add('hidden');
+          this.nextSpawnTimer = 0.15;
+        }
+        this.updateAllUILabels();
+      }
+
+      setupDraggableWindow(winEl, handleEl) {
+        let dragging = false;
+        let startX = 0, startY = 0;
+        let origLeft = 0, origTop = 0;
+
+        handleEl.addEventListener('pointerdown', (e) => {
+          if (e.target.closest('button')) return;
+          dragging = true;
+          const rect = winEl.getBoundingClientRect();
+          origLeft = rect.left;
+          origTop = rect.top;
+          startX = e.clientX;
+          startY = e.clientY;
+
+          winEl.style.right = 'auto';
+          winEl.style.left = `${origLeft}px`;
+          winEl.style.top = `${origTop}px`;
+          handleEl.setPointerCapture(e.pointerId);
+        });
+
+        handleEl.addEventListener('pointermove', (e) => {
+          if (!dragging) return;
+          const nx = Math.max(4, Math.min(window.innerWidth - winEl.offsetWidth - 4, origLeft + (e.clientX - startX)));
+          const ny = Math.max(4, Math.min(window.innerHeight - 44, origTop + (e.clientY - startY)));
+          winEl.style.left = `${nx}px`;
+          winEl.style.top = `${ny}px`;
+        });
+
+        const stop = () => { dragging = false; };
+        handleEl.addEventListener('pointerup', stop);
+        handleEl.addEventListener('pointercancel', stop);
+      }
+
+      updateCounterUI() {
+        const limitText = this.config.redrawEvery > 0 ? this.config.redrawEvery : '∞';
+        const txt = `${this.settledMarbles.length} / ${limitText}`;
+        document.getElementById('stackedCountDisplay').textContent = txt;
+        document.getElementById('miniCountLabel').textContent = `${this.settledMarbles.length}/${limitText}`;
+
+        const pinNames = { 14: 'Few', 22: 'Medium', 28: 'Many' };
+        const tag = pinNames[this.pins.length] || 'Custom';
+        document.getElementById('pinCountLabel').textContent = `${this.pins.length}個 (${tag})`;
+      }
+
+      updateAllUILabels() {
+        this.updateCounterUI();
+
+        // Sound button & volume
+        const soundBtn = document.getElementById('soundToggleBtn');
+        soundBtn.textContent = this.audio.enabled ? '🔊 ON' : '🔇 OFF';
+        soundBtn.classList.toggle('active-blue', this.audio.enabled);
+
+        const volPct = Math.round(this.audio.volume * 100);
+        document.getElementById('volumeSlider').value = String(volPct);
+        document.getElementById('volumeLabel').textContent = `${volPct}%`;
+
+        // Pin count buttons
+        document.querySelectorAll('.pin-count-btn').forEach(btn => {
+          btn.classList.toggle('active-blue', parseInt(btn.dataset.pincount, 10) === this.config.pinCount && this.pins.length === this.config.pinCount);
+        });
+
+        // Pin size buttons
+        const sizeLabels = { small: 'Small', medium: 'Medium', large: 'Large' };
+        document.getElementById('pinSizeLabel').textContent = sizeLabels[this.config.pinSize] || 'Medium';
+        document.querySelectorAll('.pin-size-btn').forEach(btn => {
+          btn.classList.toggle('active-blue', btn.dataset.pinsize === this.config.pinSize);
+        });
+
+        // Redraw Every buttons
+        document.querySelectorAll('.redraw-btn').forEach(btn => {
+          btn.classList.toggle('active-blue', parseInt(btn.dataset.redraw, 10) === this.config.redrawEvery);
+        });
+
+        // Drop mode buttons
+        document.querySelectorAll('.drop-mode-btn').forEach(btn => {
+          btn.classList.toggle('active-blue', btn.dataset.dropmode === this.config.dropMode);
+        });
+
+        // Click type buttons
+        document.querySelectorAll('.click-type-btn').forEach(btn => {
+          btn.classList.toggle('active-blue', btn.dataset.clicktype === this.config.clickType);
+        });
+
+        // Edit Pins buttons & status
+        const editBtn = document.getElementById('editPinsToggleBtn');
+        editBtn.classList.toggle('active-amber', this.config.editMode);
+        editBtn.textContent = this.config.editMode ? '🔧 編集中 (ON)' : '🔧 ピン編集 (Edit Pins)';
+
+        document.getElementById('editSubMoveBtn').classList.toggle('active-blue', this.config.editSubMode === 'move');
+        document.getElementById('editSubDeleteBtn').classList.toggle('active-amber', this.config.editSubMode === 'delete');
+
+        const statusEl = document.getElementById('statusIndicator');
+        if (this.config.editMode) {
+          statusEl.textContent = '🔧 ピン編集中';
+          statusEl.className = 'text-[10px] font-bold text-[#7c3500]';
+        } else if (this.config.dropMode === 'single') {
+          statusEl.textContent = '1-by-1 落下中';
+          statusEl.className = 'text-[10px] font-bold text-[#003366]';
+        } else {
+          statusEl.textContent = 'Multi ラッシュ中';
+          statusEl.className = 'text-[10px] font-bold text-[#0b5c28]';
+        }
+      }
+
+      showToast(message) {
+        const toast = document.getElementById('retroToast');
+        toast.textContent = message;
+        toast.classList.remove('opacity-0');
+        toast.classList.add('opacity-100');
+        clearTimeout(this._toastTimer);
+        this._toastTimer = setTimeout(() => {
+          toast.classList.remove('opacity-100');
+          toast.classList.add('opacity-0');
+        }, 2300);
+      }
+
+      /**
+       * Main Animation Loop
+       */
+      startLoop() {
+        const tick = (now) => {
+          const rawDt = (now - this.lastFrameTime) / 1000;
+          this.lastFrameTime = now;
+          const dt = Math.min(Math.max(rawDt, 0.001), 0.035);
+
+          this.update(dt);
+          this.render();
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }
+    }
+
+    // Start After Dark 2.0 "Marbles" once the window has loaded
+    window.onload = function () {
+      const app = new MarblesApp();
+      app.startLoop();
+    };
+  </script>
+</body>
+</html>
